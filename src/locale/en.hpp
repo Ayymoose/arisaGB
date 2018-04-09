@@ -1,0 +1,13 @@
+
+
+
+
+
+
+
+
+// INVALID_ROM
+// FILE_TOO_BIG
+// FILE_ZERO
+// FILE_PATH_INVALID
+// ...
