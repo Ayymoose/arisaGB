@@ -61,11 +61,8 @@ class z80 {
         int reg8[REGISTERS];    // 8/16-bit registers
         unsigned short pc;		// 16-bit registers
 		unsigned short sp;		// 16-bit registers
-
 		int clock_m;			// Internal clock for Machine cycles
-
 		int m_cycle;			// Machine cycles
-		int t_cycle;			// Time cycles FIXME: Apparently not needed?
 		bool ime;				// Master interrupt
 		bool halt;				// Halting flag
 

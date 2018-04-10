@@ -42,7 +42,7 @@ void z80::write_byte(int address, int byte) {
 	case VRAM:
 	case 0x9000:
 		gb_gpu.vram[address & 0x1FFF] = byte;
-		gb_gpu.update_tile(address, byte);
+		gb_gpu.update_tile(address/*, byte*/);
 		break;
 	case CARTRIDGE_RAM:
 	case 0xB000:
@@ -157,20 +157,18 @@ z80::~z80() {
 }
 
 z80::z80() {
-
 	in_bios = true;
 	memset(memory,0x00,MEMORY_MAX);
 	gb_gpu.reset();
-
 	clock_m = 0;
 	m_cycle = 0;
-	t_cycle = 0;
 	ime = true;
 	halt = false;
 	pc = 0x0000;
 	sp = 0x0000;
+
 	for (int i=0; i<REGISTERS; i++) {
-		reg8[i] = 0;
+		reg8[i] = 0x00;
 	}
 				
 	opcodes[0x00] = &z80::f_0x00;
@@ -702,7 +700,6 @@ z80::z80() {
 
 
 // TODO: Check contents of each function are correct
-// TODO: Fix t_cycle
 // TODO: Add tests for each instruction
 // TODO: Verify cycles and opcode mappings
 
@@ -717,7 +714,6 @@ void z80::f_UNMAPPED(int opcode) {
 void z80::f_0x00() {
 	printf("[0x%04X] NOP\n",pc-1);
 	m_cycle = 1;
-	//t_cycle = 4;
 }
 
 // LD BC,d16
@@ -726,7 +722,6 @@ void z80::f_0x01() {
 	reg8[B] = read_byte(pc+1);
 	pc+=2;
 	m_cycle = 3;
-	//t_cycle = 12;
 	printf("[0x%04X] LD BC,0x%04X\n",pc-1,(reg8[B] << 8)+reg8[C]);
 }
 
@@ -734,7 +729,6 @@ void z80::f_0x01() {
 void z80::f_0x02() {
 	write_byte((reg8[B] << 8)+reg8[C],reg8[A]);
 	m_cycle = 2;
-	//t_cycle = 8;
 	printf("[0x%04X] LD (BC),A\n",pc-1);
 }
 
@@ -745,7 +739,6 @@ void z80::f_0x03() {
     	reg8[B] = (reg8[B] + 1) & 0xFF;
     }
     m_cycle = 1;
-	//t_cycle = 4;
 	printf("[0x%04X] INC BC\n",pc-1);
 }
 
@@ -755,7 +748,6 @@ void z80::f_0x04() {
     reg8[B] &= 0xFF;
     reg8[F] = reg8[B] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-	//t_cycle = 4;
 	printf("[0x%04X] INC B\n",pc-1);
 }
 
@@ -765,7 +757,6 @@ void z80::f_0x05() {
     reg8[B] &= 0xFF;
     reg8[F] = reg8[B] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-	//t_cycle = 4;
 	printf("[0x%04X] DEC B\n",pc-1);
 }
 
@@ -775,7 +766,6 @@ void z80::f_0x06() {
 	printf("[0x%04X] LD B, 0x%02X\n",pc-1,reg8[B]);
 	pc++;
 	m_cycle = 2;
-	//t_cycle = 8;
 }
 
 // RLCA
@@ -786,7 +776,6 @@ void z80::f_0x07() {
     reg8[A] &= 0xFF;
     reg8[F] = (reg8[F] & 0xEF) + co;
 	m_cycle = 1;
-	//t_cycle = 4;
 	printf("[0x%04X] RCLA\n",pc-1);
 }
 
@@ -796,7 +785,6 @@ void z80::f_0x08() {
 	printf("[0x%04X] LD 0x%04X, SP\n",pc-1,sp);
 	pc+=2;
 	m_cycle = 3;
-	//t_cycle = 20;
 }
 
 // ADD HL,BC
@@ -811,7 +799,6 @@ void z80::f_0x09() {
     reg8[H] = (hl >> 8) & 0xFF;
     reg8[L] = hl & 0xFF;
 	m_cycle = 1;
-	//t_cycle = 8;
 	printf("[0x%04X] ADD HL BC\n",pc-1);
 }
 
@@ -819,7 +806,6 @@ void z80::f_0x09() {
 void z80::f_0x0A() {
     reg8[A] = read_byte((reg8[B] << 8) + reg8[C]);
 	m_cycle = 1;
-	//t_cycle = 8;
 	printf("[0x%04X] LD A, (BC)\n",pc-1);
 }
 
@@ -830,7 +816,6 @@ void z80::f_0x0B() {
     	reg8[B] = (reg8[B] - 1) & 0xFF;
     }
     m_cycle = 1;
-	//t_cycle = 4;
 	printf("[0x%04X] DEC BC\n",pc-1);
 }
 
@@ -840,7 +825,6 @@ void z80::f_0x0C() {
     reg8[C] &= 0xFF;
     reg8[F] = reg8[C] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-	//t_cycle = 4;
 	printf("[0x%04X] INC C\n",pc-1);
 }
 
@@ -850,7 +834,6 @@ void z80::f_0x0D() {
     reg8[C] &= 0xFF;
     reg8[F] = reg8[C] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-	//t_cycle = 4;
 	printf("[0x%04X] DEC C\n",pc-1);
 }
 
@@ -860,7 +843,6 @@ void z80::f_0x0E() {
 	printf("[0x%04X] LD C, 0x%02X\n",pc-1,reg8[C]);
     pc++;
     m_cycle = 2;
-	//t_cycle = 8;
 }
 
 // RRCA
@@ -871,7 +853,6 @@ void z80::f_0x0F() {
     reg8[A] &= 0xFF;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 1;
-	//t_cycle = 4;
 	printf("[0x%04X] RRCA\n",pc-1);
 }
 
@@ -884,12 +865,10 @@ void z80::f_0x10() {
     }
     pc++;
     m_cycle = 2;
-    //t_cycle = 8;
     reg8[B]--;
     if (reg8[B]) {
         pc += i;
         m_cycle++;
-    //    t_cycle+= 4;
     }
 }
 
@@ -899,7 +878,6 @@ void z80::f_0x11() {
     reg8[D] = read_byte(pc + 1);
     pc += 2;
     m_cycle = 3;
-    //t_cycle = 12;
 	printf("[0x%04X] LD DE, 0x%04X\n",pc-1,(reg8[D] << 8)+reg8[E]);
 }
 
@@ -907,7 +885,6 @@ void z80::f_0x11() {
 void z80::f_0x12() {
     write_byte((reg8[D] << 8) + reg8[E], reg8[A]);
     m_cycle = 2;
-    //t_cycle = 8;
 	printf("[0x%04X] LD (DE),A\n",pc-1);
 }
 
@@ -918,7 +895,6 @@ void z80::f_0x13() {
     	reg8[D] = (reg8[D] + 1) & 0xFF;
     }
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] INC DE\n",pc-1);
 }
 
@@ -928,7 +904,6 @@ void z80::f_0x14() {
     reg8[D] &= 0xFF;
     reg8[F] = reg8[D] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] INC D\n",pc-1);
 }
 
@@ -938,7 +913,6 @@ void z80::f_0x15() {
     reg8[D] &= 0xFF;
     reg8[F] = reg8[D] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] DEC D\n",pc-1);
 }
 
@@ -948,7 +922,6 @@ void z80::f_0x16() {
 	printf("[0x%04X] LD D, 0x%02X\n",pc-1,reg8[D]);
     pc++;
     m_cycle = 2;
-    //t_cycle = 8;
 }
 
 // RLA
@@ -959,7 +932,6 @@ void z80::f_0x17() {
     reg8[A] &= 0xFF;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] RLA\n",pc-1);
 }
 // JR r8
@@ -975,7 +947,7 @@ void z80::f_0x18() {
     m_cycle = 2;
     pc += i;
     m_cycle++;
-    //t_cycle += 4;
+
 }
 
 // ADD HL,DE
@@ -990,7 +962,6 @@ void z80::f_0x19() {
     reg8[H] = (hl >> 8) & 0xFF;
     reg8[L] = hl & 0xFF;
     m_cycle = 3;
-    //t_cycle = 12;
 	printf("[0x%04X] ADD HL,DE\n",pc-1);
 }
 
@@ -998,7 +969,6 @@ void z80::f_0x19() {
 void z80::f_0x1A() {
     reg8[A] = read_byte((reg8[D] << 8) + reg8[E]);
     m_cycle = 2;
-    //t_cycle = 8;
 	printf("[0x%04X] LD A,(DE)\n",pc-1);
 }
 
@@ -1009,7 +979,6 @@ void z80::f_0x1B() {
     	reg8[D] = (reg8[D] - 1) & 0xFF;
     }
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] DEC DE\n",pc-1);
 }
 
@@ -1019,7 +988,6 @@ void z80::f_0x1C() {
     reg8[E] &= 0xFF;
     reg8[F] = reg8[E] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] INC E\n",pc-1);
 }
 
@@ -1029,7 +997,6 @@ void z80::f_0x1D() {
     reg8[E] &= 0xFF;
     reg8[F] = reg8[E] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] DEC E\n",pc-1);
 }
 
@@ -1039,7 +1006,6 @@ void z80::f_0x1E() {
     reg8[E] = read_byte(pc);
     pc++;
     m_cycle = 2;
-    //t_cycle = 8;
 }
 
 // RRA
@@ -1050,7 +1016,6 @@ void z80::f_0x1F() {
     reg8[A] &= 0xFF;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] RRA\n",pc-1);
 }
 
@@ -1063,11 +1028,9 @@ void z80::f_0x20() {
     printf("[0x%04X] JR NZ,0x%02X\n",pc-1,i);
     pc++;
     m_cycle = 2;
-    //t_cycle = 8;
     if ((reg8[F] & ZERO_FLAG) == 0x00) {
         pc += i;
         m_cycle++;
-        //t_cycle += 4;
     }
 }
 
@@ -1078,7 +1041,6 @@ void z80::f_0x21() {
     reg8[H] = read_byte(pc + 1);
     pc += 2;
     m_cycle = 3;
-    //t_cycle = 12;
 }
 
 // LD (HL+),A
@@ -1089,7 +1051,6 @@ void z80::f_0x22() {
     	reg8[H] = (reg8[H] + 1) & 0xFF;
     }
     m_cycle = 2;
-    //t_cycle = 8;
 	printf("[0x%04X] LD (HL+),A\n",pc-1);
 }
 
@@ -1100,7 +1061,6 @@ void z80::f_0x23() {
     	reg8[H] = (reg8[H] + 1) & 0xFF;
     }
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] INC HL\n",pc-1);
 }
 
@@ -1110,7 +1070,6 @@ void z80::f_0x24() {
     reg8[H] &= 0xFF;
     reg8[F] = reg8[H] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] INC H\n",pc-1);
 }
 
@@ -1120,7 +1079,6 @@ void z80::f_0x25() {
     reg8[H] &= 0xFF;
     reg8[F] = reg8[H] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] DEC H\n",pc-1);
 }
 
@@ -1130,7 +1088,6 @@ void z80::f_0x26() {
     reg8[H] = read_byte(pc);
     pc++;
     m_cycle = 2;
-    //t_cycle = 8;
 }
 
 // DAA
@@ -1157,11 +1114,10 @@ void z80::f_0x28() {
     }
     pc++;
     m_cycle = 2;
-    //t_cycle = 8;
+
     if ((reg8[F] & ZERO_FLAG) == ZERO_FLAG) {
         pc += i;
         m_cycle++;
-        //t_cycle += 4;
     }
 }
 
@@ -1177,7 +1133,6 @@ void z80::f_0x29() {
     reg8[H] = (hl >> 8) & 0xFF;
     reg8[L] = hl & 0xFF;
     m_cycle = 3;
-    //t_cycle = 12;
 	printf("[0x%04X] ADD HL,HL\n",pc-1);
 }
 
@@ -1187,7 +1142,6 @@ void z80::f_0x2A() {
     reg8[L] = (reg8[L] + 1) & 0xFF;
     if (!reg8[L]) reg8[H] = (reg8[H] + 1) & 0xFF;
     m_cycle = 2;
-    //t_cycle = 8;
 	printf("[0x%04X] LD A,(HL+)\n",pc-1);
 }
 
@@ -1198,7 +1152,6 @@ void z80::f_0x2B() {
     	reg8[H] = (reg8[H] - 1) & 0xFF;
     }
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] DEC HL\n",pc-1);
 }
 
@@ -1208,7 +1161,6 @@ void z80::f_0x2C() {
     reg8[L] &= 0xFF;
     reg8[F] = reg8[L] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] INC L\n",pc-1);
 }
 
@@ -1218,7 +1170,6 @@ void z80::f_0x2D() {
     reg8[L] &= 0xFF;
     reg8[F] = reg8[L] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] DEC L\n",pc-1);
 }
 
@@ -1228,7 +1179,6 @@ void z80::f_0x2E() {
     reg8[L] = read_byte(pc);
     pc++;
     m_cycle = 2;
-    //t_cycle = 8;
 }
 
 // CPL
@@ -1236,7 +1186,6 @@ void z80::f_0x2F() {
     reg8[A] ^= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] CPL\n",pc-1);
 }
 
@@ -1249,11 +1198,10 @@ void z80::f_0x30() {
     }
     pc++;
     m_cycle = 2;
-    //t_cycle = 8;
+
     if ((reg8[F] & CARRY_FLAG) == 0x00) {
         pc += i;
         m_cycle++;
-        //t_cycle += 4;
     }
 }
 
@@ -1263,7 +1211,6 @@ void z80::f_0x31() {
     sp = read_word(pc);
     pc += 2;
     m_cycle = 3;
-    //t_cycle = 12;
 }
 
 // LD (HL-),A
@@ -1274,7 +1221,6 @@ void z80::f_0x32() {
     	reg8[H] = (reg8[H] - 1) & 0xFF;
     }
     m_cycle = 2;
-    //t_cycle = 8;
 	printf("[0x%04X] LD (HL-),A\n",pc-1);
 }
 
@@ -1282,7 +1228,6 @@ void z80::f_0x32() {
 void z80::f_0x33() {
     sp = (sp + 1) & 0xFFFF;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] INC SP\n",pc-1);
 }
 
@@ -1293,7 +1238,6 @@ void z80::f_0x34() {
     write_byte((reg8[H] << 8) + reg8[L], i);
     reg8[F] = i ? 0 : ZERO_FLAG;
     m_cycle = 3;
-    //t_cycle = 12;
 	printf("[0x%04X] INC (HL)\n",pc-1);
 }
 
@@ -1304,7 +1248,6 @@ void z80::f_0x35() {
     write_byte((reg8[H] << 8) + reg8[L], i);
     reg8[F] = i ? 0 : ZERO_FLAG;
     m_cycle = 3;
-    //t_cycle = 12;
 	printf("[0x%04X] DEC HL\n",pc-1);
 }
 
@@ -1314,14 +1257,12 @@ void z80::f_0x36() {
     write_byte((reg8[H] << 8) + reg8[L], read_byte(pc));
     pc++;
     m_cycle = 3;
-    //t_cycle = 12;
 }
 
 // SCF
 void z80::f_0x37() {
     reg8[F] |= CARRY_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] SCF\n",pc-1);
 }
 
@@ -1334,11 +1275,10 @@ void z80::f_0x38() {
     }
     pc++;
     m_cycle = 2;
-    //t_cycle = 8;
+
     if ((reg8[F] & CARRY_FLAG) == CARRY_FLAG) {
         pc += i;
         m_cycle++;
-        //t_cycle += 4;
     }
 }
 
@@ -1354,7 +1294,6 @@ void z80::f_0x39() {
     reg8[H] = (hl >> 8) & 0xFF;
     reg8[L] = hl & 0xFF;
     m_cycle = 3;
-    //t_cycle = 12;
 	printf("[0x%04X] ADD HL,SP\n",pc-1);
 }
 
@@ -1366,7 +1305,6 @@ void z80::f_0x3A() {
     	reg8[H] = (reg8[H] - 1) & 0xFF;
     }
     m_cycle = 2;
-    //t_cycle = 8;
 	printf("[0x%04X] LD A,(HL-)\n",pc-1);
 }
 
@@ -1374,7 +1312,6 @@ void z80::f_0x3A() {
 void z80::f_0x3B() {
     sp = (sp - 1) & 0xFFFF;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] DEC SP\n",pc-1);
 }
 
@@ -1384,7 +1321,6 @@ void z80::f_0x3C() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] INC A\n",pc-1);
 }
 
@@ -1394,7 +1330,6 @@ void z80::f_0x3D() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] DEC A\n",pc-1);
 }
 
@@ -1404,7 +1339,6 @@ void z80::f_0x3E() {
     reg8[A] = read_byte(pc);
     pc++;
     m_cycle = 2;
-    //t_cycle = 8;
 }
 
 // CCF
@@ -1412,15 +1346,12 @@ void z80::f_0x3F() {
     int ci = reg8[F] & CARRY_FLAG ? 0 : CARRY_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + ci;
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] CCF\n",pc-1);
 }
 
 // LD B,B
 void z80::f_0x40() {
-    //reg8[B] = reg8[B];
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] LD B,B\n",pc-1);
 }
 
@@ -1428,7 +1359,6 @@ void z80::f_0x40() {
 void z80::f_0x41() {
     reg8[B] = reg8[C];
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] LD B,C\n",pc-1);
 }
 
@@ -1436,7 +1366,6 @@ void z80::f_0x41() {
 void z80::f_0x42() {
     reg8[B] = reg8[D];
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] LD B,D\n",pc-1);
 }
 
@@ -1444,7 +1373,6 @@ void z80::f_0x42() {
 void z80::f_0x43() {
     reg8[B] = reg8[E];
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] LD B,E\n",pc-1);
 }
 
@@ -1452,7 +1380,6 @@ void z80::f_0x43() {
 void z80::f_0x44() {
     reg8[B] = reg8[H];
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] LD B,H\n",pc-1);
 }
 
@@ -1460,7 +1387,6 @@ void z80::f_0x44() {
 void z80::f_0x45() {
     reg8[B] = reg8[L];
     m_cycle = 1;
-    //t_cycle = 4;
 	printf("[0x%04X] LD B,L\n",pc-1);
 }
 
@@ -1468,7 +1394,6 @@ void z80::f_0x45() {
 void z80::f_0x46() {
     reg8[B] = read_byte((reg8[H] << 8) + reg8[L]);
     m_cycle = 2;
-    //t_cycle = 8;
 	printf("[0x%04X] LD B,(HL)\n",pc-1);
 }
 
@@ -1476,7 +1401,7 @@ void z80::f_0x46() {
 void z80::f_0x47() {
     reg8[B] = reg8[A];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD B,A\n",pc-1);
 }
 
@@ -1484,7 +1409,7 @@ void z80::f_0x47() {
 void z80::f_0x48() {
     reg8[C] = reg8[B];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD C,B\n",pc-1);
 }
 
@@ -1492,7 +1417,7 @@ void z80::f_0x48() {
 void z80::f_0x49() {
     //reg8[C] = reg8[C];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD C,C\n",pc-1);
 }
 
@@ -1500,7 +1425,7 @@ void z80::f_0x49() {
 void z80::f_0x4A() {
     reg8[C] = reg8[D];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD C,D\n",pc-1);
 }
 
@@ -1508,7 +1433,7 @@ void z80::f_0x4A() {
 void z80::f_0x4B() {
     reg8[C] = reg8[E];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD C,E\n",pc-1);
 }
 
@@ -1516,7 +1441,7 @@ void z80::f_0x4B() {
 void z80::f_0x4C() {
     reg8[C] = reg8[H];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD C,H\n",pc-1);
 }
 
@@ -1524,7 +1449,7 @@ void z80::f_0x4C() {
 void z80::f_0x4D() {
     reg8[C] = reg8[L];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD C,L\n",pc-1);
 }
 
@@ -1532,7 +1457,7 @@ void z80::f_0x4D() {
 void z80::f_0x4E() {
     reg8[C] = read_byte((reg8[H] << 8) + reg8[L]);
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] LD C,(HL)\n",pc-1);
 }
 
@@ -1540,7 +1465,7 @@ void z80::f_0x4E() {
 void z80::f_0x4F() {
     reg8[C] = reg8[A];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD C,A\n",pc-1);
 }
 
@@ -1548,7 +1473,7 @@ void z80::f_0x4F() {
 void z80::f_0x50() {
     reg8[D] = reg8[B];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD D,B\n",pc-1);
 }
 
@@ -1556,7 +1481,7 @@ void z80::f_0x50() {
 void z80::f_0x51() {
     reg8[D] = reg8[C];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD D,C\n",pc-1);
 }
 
@@ -1564,7 +1489,7 @@ void z80::f_0x51() {
 void z80::f_0x52() {
     //reg8[D] = reg8[D];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD D,D\n",pc-1);
 }
 
@@ -1572,7 +1497,7 @@ void z80::f_0x52() {
 void z80::f_0x53() {
     reg8[D] = reg8[E];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD D,E\n",pc-1);
 }
 
@@ -1580,7 +1505,7 @@ void z80::f_0x53() {
 void z80::f_0x54() {
     reg8[D] = reg8[H];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD D,H\n",pc-1);
 }
 
@@ -1588,7 +1513,7 @@ void z80::f_0x54() {
 void z80::f_0x55() {
     reg8[D] = reg8[L];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD D,L\n",pc-1);
 }
 
@@ -1596,7 +1521,7 @@ void z80::f_0x55() {
 void z80::f_0x56() {
     reg8[D] = read_byte((reg8[H] << 8) + reg8[L]);
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] LD D,(HL)\n",pc-1);
 }
 
@@ -1604,7 +1529,7 @@ void z80::f_0x56() {
 void z80::f_0x57() {
     reg8[D] = reg8[A];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD D,A\n",pc-1);
 }
 
@@ -1612,7 +1537,7 @@ void z80::f_0x57() {
 void z80::f_0x58() {
     reg8[E] = reg8[B];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD E,B\n",pc-1);
 }
 
@@ -1620,7 +1545,7 @@ void z80::f_0x58() {
 void z80::f_0x59() {
     reg8[E] = reg8[C];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD E,C\n",pc-1);
 }
 
@@ -1628,7 +1553,7 @@ void z80::f_0x59() {
 void z80::f_0x5A() {
     reg8[E] = reg8[D];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD E,D\n",pc-1);
 }
 
@@ -1636,7 +1561,7 @@ void z80::f_0x5A() {
 void z80::f_0x5B() {
     //reg8[E] = reg8[E];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD E,D\n",pc-1);
 }
 
@@ -1644,7 +1569,7 @@ void z80::f_0x5B() {
 void z80::f_0x5C() {
     reg8[E] = reg8[H];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD E,H\n",pc-1);
 }
 
@@ -1652,7 +1577,7 @@ void z80::f_0x5C() {
 void z80::f_0x5D() {
     reg8[E] = reg8[L];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD E,L\n",pc-1);
 }
 
@@ -1660,7 +1585,7 @@ void z80::f_0x5D() {
 void z80::f_0x5E() {
     reg8[E] = read_byte((reg8[H] << 8) + reg8[L]);
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] LD E,(HL)\n",pc-1);
 }
 
@@ -1668,7 +1593,7 @@ void z80::f_0x5E() {
 void z80::f_0x5F() {
     reg8[E] = reg8[A];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD E,A\n",pc-1);
 }
 
@@ -1676,7 +1601,7 @@ void z80::f_0x5F() {
 void z80::f_0x60() {
     reg8[H] = reg8[B];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD H,B\n",pc-1);
 }
 
@@ -1684,7 +1609,7 @@ void z80::f_0x60() {
 void z80::f_0x61() {
     reg8[H] = reg8[C];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD H,C\n",pc-1);
 }
 
@@ -1692,7 +1617,7 @@ void z80::f_0x61() {
 void z80::f_0x62() {
     reg8[H] = reg8[D];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD H,D\n",pc-1);
 }
 
@@ -1700,7 +1625,7 @@ void z80::f_0x62() {
 void z80::f_0x63() {
     reg8[H] = reg8[E];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD H,E\n",pc-1);
 }
 
@@ -1708,7 +1633,7 @@ void z80::f_0x63() {
 void z80::f_0x64() {
     //reg8[H] = reg8[H];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD H,H\n",pc-1);
 }
 
@@ -1716,7 +1641,7 @@ void z80::f_0x64() {
 void z80::f_0x65() {
     reg8[H] = reg8[L];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD H,L\n",pc-1);
 }
 
@@ -1724,7 +1649,7 @@ void z80::f_0x65() {
 void z80::f_0x66() {
     reg8[H] = read_byte((reg8[H] << 8) + reg8[L]);
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] LD H,(HL)\n",pc-1);
 }
 
@@ -1732,7 +1657,7 @@ void z80::f_0x66() {
 void z80::f_0x67() {
     reg8[H] = reg8[A];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD H,A\n",pc-1);
 }
 
@@ -1740,7 +1665,7 @@ void z80::f_0x67() {
 void z80::f_0x68() {
     reg8[L] = reg8[B];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD L,B\n",pc-1);
 }
 
@@ -1748,7 +1673,7 @@ void z80::f_0x68() {
 void z80::f_0x69() {
     reg8[L] = reg8[C];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD L,C\n",pc-1);
 }
 
@@ -1756,7 +1681,7 @@ void z80::f_0x69() {
 void z80::f_0x6A() {
     reg8[L] = reg8[D];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD L,D\n",pc-1);
 }
 
@@ -1764,7 +1689,7 @@ void z80::f_0x6A() {
 void z80::f_0x6B() {
     reg8[L] = reg8[E];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD L,E\n",pc-1);
 }
 
@@ -1772,7 +1697,7 @@ void z80::f_0x6B() {
 void z80::f_0x6C() {
     reg8[L] = reg8[H];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD L,H\n",pc-1);
 }
 
@@ -1780,7 +1705,7 @@ void z80::f_0x6C() {
 void z80::f_0x6D() {
     //reg8[L] = reg8[L];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD L,L\n",pc-1);
 }
 
@@ -1788,7 +1713,7 @@ void z80::f_0x6D() {
 void z80::f_0x6E() {
     reg8[L] = read_byte((reg8[H] << 8) + reg8[L]);
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] LD L,(HL)\n",pc-1);
 }
 
@@ -1796,7 +1721,7 @@ void z80::f_0x6E() {
 void z80::f_0x6F() {
     reg8[L] = reg8[A];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD L,L\n",pc-1);
 }
 
@@ -1804,7 +1729,7 @@ void z80::f_0x6F() {
 void z80::f_0x70() {
     write_byte((reg8[H] << 8) + reg8[L], reg8[B]);
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] LD (HL),B\n",pc-1);
 }
 
@@ -1812,7 +1737,7 @@ void z80::f_0x70() {
 void z80::f_0x71() {
     write_byte((reg8[H] << 8) + reg8[L], reg8[C]);
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] LD (HL),C\n",pc-1);
 }
 
@@ -1820,7 +1745,7 @@ void z80::f_0x71() {
 void z80::f_0x72() {
     write_byte((reg8[H] << 8) + reg8[L], reg8[D]);
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] LD (HL),D\n",pc-1);
 }
 
@@ -1828,7 +1753,7 @@ void z80::f_0x72() {
 void z80::f_0x73() {
     write_byte((reg8[H] << 8) + reg8[L], reg8[E]);
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] LD (HL),E\n",pc-1);
 }
 
@@ -1836,7 +1761,7 @@ void z80::f_0x73() {
 void z80::f_0x74() {
     write_byte((reg8[H] << 8) + reg8[L], reg8[H]);
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] LD (HL),H\n",pc-1);
 }
 
@@ -1844,7 +1769,7 @@ void z80::f_0x74() {
 void z80::f_0x75() {
     write_byte((reg8[H] << 8) + reg8[L], reg8[L]);
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] LD (HL),L\n",pc-1);
 }
 
@@ -1852,7 +1777,7 @@ void z80::f_0x75() {
 void z80::f_0x76() {
     halt = true;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] HALT\n",pc-1);
 }
 
@@ -1860,7 +1785,7 @@ void z80::f_0x76() {
 void z80::f_0x77() {
     write_byte((reg8[H] << 8) + reg8[L], reg8[A]);
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] LD (HL),A\n",pc-1);
 }
 
@@ -1868,7 +1793,7 @@ void z80::f_0x77() {
 void z80::f_0x78() {
     reg8[A] = reg8[B];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD A,B\n",pc-1);
 }
 
@@ -1876,7 +1801,7 @@ void z80::f_0x78() {
 void z80::f_0x79() {
     reg8[A] = reg8[C];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD A,C\n",pc-1);
 }
 
@@ -1884,7 +1809,7 @@ void z80::f_0x79() {
 void z80::f_0x7A() {
     reg8[A] = reg8[D];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD A,D\n",pc-1);
 }
 
@@ -1892,7 +1817,7 @@ void z80::f_0x7A() {
 void z80::f_0x7B() {
     reg8[A] = reg8[E];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD A,E\n",pc-1);
 }
 
@@ -1900,7 +1825,7 @@ void z80::f_0x7B() {
 void z80::f_0x7C() {
     reg8[A] = reg8[H];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD A,H\n",pc-1);
 }
 
@@ -1908,7 +1833,7 @@ void z80::f_0x7C() {
 void z80::f_0x7D() {
     reg8[A] = reg8[L];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD A,L\n",pc-1);
 }
 
@@ -1916,7 +1841,7 @@ void z80::f_0x7D() {
 void z80::f_0x7E() {
     reg8[A] = read_byte((reg8[H] << 8) + reg8[L]);
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] LD A,(HL)\n",pc-1);
 }
 
@@ -1924,7 +1849,7 @@ void z80::f_0x7E() {
 void z80::f_0x7F() {
     //reg8[A] = reg8[A];
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] LD A,A\n",pc-1);
 }
 
@@ -1941,7 +1866,7 @@ void z80::f_0x80() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] ADD A,B\n",pc-1);
 }
 
@@ -1958,7 +1883,7 @@ void z80::f_0x81() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] ADD A,C\n",pc-1);
 }
 
@@ -1975,7 +1900,7 @@ void z80::f_0x82() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] ADD A,D\n",pc-1);
 }
 
@@ -1992,7 +1917,7 @@ void z80::f_0x83() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] ADD A,E\n",pc-1);
 }
 
@@ -2009,7 +1934,7 @@ void z80::f_0x84() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] ADD A,H\n",pc-1);
 }
 
@@ -2026,7 +1951,7 @@ void z80::f_0x85() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] ADD A,L\n",pc-1);
 }
 
@@ -2044,7 +1969,7 @@ void z80::f_0x86() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] ADD A,(HL)\n",pc-1);
 }
 
@@ -2061,7 +1986,7 @@ void z80::f_0x87() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] ADD A,A\n",pc-1);
 }
 
@@ -2079,7 +2004,7 @@ void z80::f_0x88() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] ADC A,B\n",pc-1);
 }
 
@@ -2097,7 +2022,7 @@ void z80::f_0x89() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] ADC A,C\n",pc-1);
 }
 
@@ -2111,7 +2036,7 @@ void z80::f_0x8A() {
     if (!reg8[A]) reg8[F] |= ZERO_FLAG;
     if ((reg8[A] ^ reg8[D] ^ a) & CARRY_FLAG) reg8[F] |= HALF_CARRY_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] ADC A,D\n",pc-1);
 }
 
@@ -2129,7 +2054,7 @@ void z80::f_0x8B() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] ADC A,E\n",pc-1);
 }
 
@@ -2147,7 +2072,7 @@ void z80::f_0x8C() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] ADC A,H\n",pc-1);
 }
 
@@ -2165,7 +2090,7 @@ void z80::f_0x8D() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] ADC A,L\n",pc-1);
 }
 
@@ -2184,7 +2109,7 @@ void z80::f_0x8E() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] ADC A,(HL)\n",pc-1);
 }
 
@@ -2202,7 +2127,7 @@ void z80::f_0x8F() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] ADC A,A\n",pc-1);
 }
 
@@ -2219,7 +2144,7 @@ void z80::f_0x90() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] SUB B\n",pc-1);
 }
 
@@ -2236,7 +2161,7 @@ void z80::f_0x91() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] SUB C\n",pc-1);
 }
 
@@ -2253,7 +2178,7 @@ void z80::f_0x92() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] SUB D\n",pc-1);
 }
 
@@ -2270,7 +2195,7 @@ void z80::f_0x93() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] SUB E\n",pc-1);
 }
 
@@ -2287,7 +2212,7 @@ void z80::f_0x94() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] SUB H\n",pc-1);
 }
 
@@ -2304,7 +2229,7 @@ void z80::f_0x95() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] SUB L\n",pc-1);
 }
 
@@ -2322,7 +2247,7 @@ void z80::f_0x96() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] SUB (HL)\n",pc-1);
 }
 
@@ -2339,7 +2264,7 @@ void z80::f_0x97() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] SUB A\n",pc-1);
 }
 
@@ -2357,7 +2282,7 @@ void z80::f_0x98() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] SBC A,B\n",pc-1);
 }
 
@@ -2375,7 +2300,7 @@ void z80::f_0x99() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] SBC A,C\n",pc-1);
 }
 
@@ -2393,7 +2318,7 @@ void z80::f_0x9A() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] SBC A,D\n",pc-1);
 }
 
@@ -2411,7 +2336,7 @@ void z80::f_0x9B() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] SBC A,E\n",pc-1);
 }
 
@@ -2429,7 +2354,7 @@ void z80::f_0x9C() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] SBC A,H\n",pc-1);
 }
 
@@ -2447,7 +2372,7 @@ void z80::f_0x9D() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] SBC A,L\n",pc-1);
 }
 
@@ -2466,7 +2391,7 @@ void z80::f_0x9E() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] SBC A,(HL)\n",pc-1);
 }
 
@@ -2484,7 +2409,7 @@ void z80::f_0x9F() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] SBC A,A\n",pc-1);
 }
 
@@ -2494,7 +2419,7 @@ void z80::f_0xA0() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] AND B\n",pc-1);
 }
 
@@ -2504,7 +2429,7 @@ void z80::f_0xA1() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] AND C\n",pc-1);
 }
 
@@ -2514,7 +2439,7 @@ void z80::f_0xA2() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] AND D\n",pc-1);
 }
 
@@ -2524,7 +2449,7 @@ void z80::f_0xA3() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] AND E\n",pc-1);
 }
 
@@ -2534,7 +2459,7 @@ void z80::f_0xA4() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] AND H\n",pc-1);
 }
 
@@ -2544,7 +2469,7 @@ void z80::f_0xA5() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] AND L\n",pc-1);
 }
 
@@ -2554,7 +2479,7 @@ void z80::f_0xA6() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] AND (HL)\n",pc-1);
 }
 
@@ -2564,7 +2489,7 @@ void z80::f_0xA7() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] AND A\n",pc-1);
 }
 
@@ -2574,7 +2499,7 @@ void z80::f_0xA8() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] XOR B\n",pc-1);
 }
 
@@ -2584,7 +2509,7 @@ void z80::f_0xA9() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] XOR C\n",pc-1);
 }
 
@@ -2594,7 +2519,7 @@ void z80::f_0xAA() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] XOR D\n",pc-1);
 }
 
@@ -2604,7 +2529,7 @@ void z80::f_0xAB() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
 	m_cycle = 1;
-	//t_cycle = 4;
+
 	printf("[0x%04X] XOR E\n",pc-1);
 }
 
@@ -2614,7 +2539,7 @@ void z80::f_0xAC() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] XOR H\n",pc-1);
 }
 
@@ -2624,7 +2549,7 @@ void z80::f_0xAD() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] XOR L\n",pc-1);
 }
 
@@ -2634,7 +2559,7 @@ void z80::f_0xAE() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] XOR (HL)\n",pc-1);
 }
 
@@ -2644,7 +2569,7 @@ void z80::f_0xAF() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] XOR A\n",pc-1);
 }
 
@@ -2654,7 +2579,7 @@ void z80::f_0xB0() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] OR B\n",pc-1);
 }
 
@@ -2664,7 +2589,7 @@ void z80::f_0xB1() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] OR C\n",pc-1);
 }
 
@@ -2674,7 +2599,7 @@ void z80::f_0xB2() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] OR D\n",pc-1);
 }
 
@@ -2684,7 +2609,7 @@ void z80::f_0xB3() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] OR E\n",pc-1);
 }
 
@@ -2694,7 +2619,7 @@ void z80::f_0xB4() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] OR H\n",pc-1);
 }
 
@@ -2704,7 +2629,7 @@ void z80::f_0xB5() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] OR L\n",pc-1);
 }
 
@@ -2714,7 +2639,7 @@ void z80::f_0xB6() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] OR (HL)\n",pc-1);
 }
 
@@ -2724,7 +2649,7 @@ void z80::f_0xB7() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] OR A\n",pc-1);
 }
 
@@ -2741,7 +2666,7 @@ void z80::f_0xB8() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] CP B\n",pc-1);
 }
 
@@ -2758,7 +2683,7 @@ void z80::f_0xB9() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] CP C\n",pc-1);
 }
 
@@ -2775,7 +2700,7 @@ void z80::f_0xBA() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] CP D\n",pc-1);
 }
 
@@ -2792,7 +2717,7 @@ void z80::f_0xBB() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] CP E\n",pc-1);
 }
 
@@ -2809,7 +2734,7 @@ void z80::f_0xBC() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] CP H\n",pc-1);
 }
 
@@ -2826,7 +2751,7 @@ void z80::f_0xBD() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] CP L\n",pc-1);
 }
 
@@ -2844,7 +2769,7 @@ void z80::f_0xBE() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] CP (HL)\n",pc-1);
 }
 
@@ -2861,14 +2786,14 @@ void z80::f_0xBF() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] CP A\n",pc-1);
 }
 
 // RET NZ
 void z80::f_0xC0() {
     m_cycle = 1;
-    //t_cycle = 4;
+
     if ((reg8[F] & ZERO_FLAG) == 0x00) {
         pc = read_word(sp);
         sp += 2;
@@ -2884,7 +2809,7 @@ void z80::f_0xC1() {
     reg8[B] = read_byte(sp);
     sp++;
     m_cycle = 3;
-    //t_cycle = 12;
+
 	printf("[0x%04X] POP BC\n",pc-1);
 }
 
@@ -2892,7 +2817,7 @@ void z80::f_0xC1() {
 void z80::f_0xC2() {
 	printf("[0x%04X] JP NZ, 0x%04X\n",pc-1,read_word(pc));
     m_cycle = 3;
-    //t_cycle = 12;
+
     if ((reg8[F] & ZERO_FLAG) == 0x00) {
         pc = read_word(pc);
         m_cycle++;
@@ -2904,14 +2829,14 @@ void z80::f_0xC3() {
 	printf("[0x%04X] JP 0x%04X\n",pc-1,read_word(pc));
     pc = read_word(pc);
     m_cycle = 3;
-    //t_cycle = 12;
+
 }
 
 // CALL NZ,a16
 void z80::f_0xC4() {
 	printf("[0x%04X] CALL NZ, 0x%04X\n",pc-1,read_word(pc));
     m_cycle = 3;
-    //t_cycle = 12;
+
     if ((reg8[F] & ZERO_FLAG) == 0x00) {
         sp -= 2;
         write_word(sp, pc + 2);
@@ -2927,7 +2852,7 @@ void z80::f_0xC5() {
     sp--;
     write_byte(sp, reg8[C]);
     m_cycle = 3;
-    //t_cycle = 12;
+
 	printf("[0x%04X] PUSH BC\n",pc-1);
 }
 
@@ -2947,7 +2872,7 @@ void z80::f_0xC6() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 2;
-    //t_cycle = 8;
+
 }
 
 // RST 00H
@@ -2958,14 +2883,14 @@ void z80::f_0xC7() {
     write_word(sp, pc);
     pc = 0x00;
     m_cycle = 3;
-    //t_cycle = 12;
+
 }
 
 // RET Z
 void z80::f_0xC8() {
 	printf("[0x%04X] RET Z\n",pc-1);
     m_cycle = 1;
-    //t_cycle = 4;
+
     if ((reg8[F] & ZERO_FLAG) == ZERO_FLAG) {
         pc = read_word(sp);
         sp += 2;
@@ -2979,18 +2904,18 @@ void z80::f_0xC9() {
     pc = read_word(sp);
     sp += 2;
     m_cycle = 3;
-    //t_cycle = 12;
+
 }
 
 // JP Z,a16
 void z80::f_0xCA() {
 	printf("[0x%04X] JP Z, 0x%04X\n",pc-1,read_word(pc));
     m_cycle = 3;
-    //t_cycle = 12;
+
     if ((reg8[F] & ZERO_FLAG) == ZERO_FLAG) {
         pc = read_word(pc);
         m_cycle++;
-        //t_cycle += 4;
+
     } else pc += 2;
 }
 
@@ -3007,7 +2932,7 @@ void z80::f_0xCB() {
 void z80::f_0xCC() {
 	printf("[0x%04X] CALL Z, 0x%04X\n",pc-1,read_word(pc));
     m_cycle = 3;
-    //t_cycle = 12;
+
     if ((reg8[F] & ZERO_FLAG) == ZERO_FLAG) {
         sp -= 2;
         write_word(sp, pc + 2);
@@ -3023,7 +2948,7 @@ void z80::f_0xCD() {
     write_word(sp, pc + 2);
     pc = read_word(pc);
     m_cycle = 5;
-    //t_cycle = 20;
+
 }
 
 // ADC A,d8
@@ -3043,7 +2968,7 @@ void z80::f_0xCE() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 2;
-    //t_cycle = 8;
+
 }
 
 // RST 08H
@@ -3054,14 +2979,14 @@ void z80::f_0xCF() {
     write_word(sp, pc);
     pc = 0x08;
     m_cycle = 3;
-    //t_cycle = 12;
+
 }
 
 // RET NC
 void z80::f_0xD0() {
 	printf("[0x%04X] RET NC\n",pc-1);
     m_cycle = 1;
-    //t_cycle = 4;
+
     if ((reg8[F] & CARRY_FLAG) == 0x00) {
         pc = read_word(sp);
         sp += 2;
@@ -3076,7 +3001,7 @@ void z80::f_0xD1() {
     reg8[D] = read_byte(sp);
     sp++;
     m_cycle = 3;
-    //t_cycle = 12;
+
 	printf("[0x%04X] POP DE\n",pc-1);
 }
 
@@ -3084,7 +3009,7 @@ void z80::f_0xD1() {
 void z80::f_0xD2() {
 	printf("[0x%04X] JP NC, 0x%04X\n",pc-1,read_word(pc));
     m_cycle = 3;
-    //t_cycle = 12;
+
     if ((reg8[F] & CARRY_FLAG) == 0x00) {
         pc = read_word(pc);
         m_cycle++;
@@ -3099,7 +3024,7 @@ void z80::f_0xD3() {
 void z80::f_0xD4() {
 	printf("[0x%04X] CALL NC, 0x%04X\n",pc-1,read_word(pc));
     m_cycle = 3;
-    //t_cycle = 12;
+
     if ((reg8[F] & CARRY_FLAG) == 0x00) {
         sp -= 2;
         write_word(sp, pc + 2);
@@ -3115,7 +3040,7 @@ void z80::f_0xD5() {
     sp--;
     write_byte(sp, reg8[E]);
     m_cycle = 3;
-    //t_cycle = 12;
+
 	printf("[0x%04X] PUSH DE\n",pc-1);
 }
 
@@ -3135,7 +3060,7 @@ void z80::f_0xD6() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 2;
-    //t_cycle = 8;
+
 }
 
 // RST 10H
@@ -3146,14 +3071,14 @@ void z80::f_0xD7() {
     write_word(sp, pc);
     pc = CARRY_FLAG;
     m_cycle = 3;
-    //t_cycle = 12;
+
 }
 
 // RET C
 void z80::f_0xD8() {
 	printf("[0x%04X] RET C\n",pc-1);
     m_cycle = 1;
-    //t_cycle = 4;
+
     if ((reg8[F] & CARRY_FLAG) == CARRY_FLAG) {
         pc = read_word(sp);
         sp += 2;
@@ -3169,14 +3094,14 @@ void z80::f_0xD9() {
     pc = read_word(sp);
     sp += 2;
     m_cycle = 3;
-    //t_cycle = 12;
+
 }
 
 // JP C,a16
 void z80::f_0xDA() {
 	printf("[0x%04X] JP C, 0x%04X\n",pc-1,read_word(pc));
     m_cycle = 3;
-    //t_cycle = 12;
+
     if ((reg8[F] & CARRY_FLAG) == CARRY_FLAG) {
         pc = read_word(pc);
         m_cycle++;
@@ -3191,7 +3116,7 @@ void z80::f_0xDB() {
 void z80::f_0xDC() {
 	printf("[0x%04X] CALL C, 0x%04X\n",pc-1,read_word(pc));
     m_cycle = 3;
-    //t_cycle = 12;
+
     if ((reg8[F] & CARRY_FLAG) == CARRY_FLAG) {
         sp -= 2;
         write_word(sp, pc + 2);
@@ -3221,7 +3146,7 @@ void z80::f_0xDE() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 2;
-    //t_cycle = 8;
+
 }
 
 // RST 18H
@@ -3232,7 +3157,7 @@ void z80::f_0xDF() {
     write_word(sp, pc);
     pc = 0x18;
     m_cycle = 3;
-    //t_cycle = 12;
+
 }
 
 // LDH (a8),A
@@ -3241,7 +3166,7 @@ void z80::f_0xE0() {
     write_byte(0xFF00 + read_byte(pc), reg8[A]);
     pc++;
     m_cycle = 3;
-    //t_cycle = 12;
+
 }
 
 // POP HL
@@ -3251,7 +3176,7 @@ void z80::f_0xE1() {
     reg8[H] = read_byte(sp);
     sp++;
     m_cycle = 3;
-    //t_cycle = 12;
+
 	printf("[0x%04X] POP HL\n",pc-1);
 }
 
@@ -3259,7 +3184,7 @@ void z80::f_0xE1() {
 void z80::f_0xE2() {
     write_byte(0xFF00 + reg8[C], reg8[A]);
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] LD (C),A\n",pc-1);
 }
 
@@ -3278,7 +3203,7 @@ void z80::f_0xE5() {
     sp--;
     write_byte(sp, reg8[L]);
     m_cycle = 3;
-    //t_cycle = 12;
+
 	printf("[0x%04X] PUSH HL\n",pc-1);
 }
 
@@ -3290,7 +3215,7 @@ void z80::f_0xE6() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
 }
 
 // RST 20H
@@ -3301,7 +3226,7 @@ void z80::f_0xE7() {
     write_word(sp, pc);
     pc = HALF_CARRY_FLAG;
     m_cycle = 3;
-    //t_cycle = 12;
+
 }
 
 // ADD SP,r8
@@ -3314,7 +3239,7 @@ void z80::f_0xE8() {
     pc++;
     sp += i;
     m_cycle = 4;
-    //t_cycle = 16;
+
 }
 
 // JP (HL)
@@ -3322,7 +3247,7 @@ void z80::f_0xE9() {
 	printf("[0x%04X] JP (HL)\n",pc-1);
 	pc = (reg8[H] << 8) + reg8[L];
     m_cycle = 1;
-    //t_cycle = 4;
+
 }
 
 // LD (a16),A
@@ -3331,7 +3256,7 @@ void z80::f_0xEA() {
     write_byte(read_word(pc), reg8[A]);
     pc += 2;
     m_cycle = 4;
-    //t_cycle = 16;
+
 }
 
 void z80::f_0xEB() {
@@ -3354,7 +3279,7 @@ void z80::f_0xEE() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
 }
 
 // RST28
@@ -3365,7 +3290,7 @@ void z80::f_0xEF() {
     write_word(sp, pc);
     pc = 0x28;
     m_cycle = 3;
-    //t_cycle = 12;
+
 }
 
 // LDH A,(a8)
@@ -3374,7 +3299,7 @@ void z80::f_0xF0() {
     reg8[A] = read_byte(0xFF00 + read_byte(pc));
     pc++;
     m_cycle = 3;
-    //t_cycle = 12;
+
 }
 
 // POP AF
@@ -3384,7 +3309,7 @@ void z80::f_0xF1() {
     reg8[A] = read_byte(sp);
     sp++;
     m_cycle = 3;
-    //t_cycle = 12;
+
 	printf("[0x%04X] POP AF\n",pc-1);
 }
 
@@ -3392,7 +3317,7 @@ void z80::f_0xF1() {
 void z80::f_0xF2() {
     reg8[A] = read_byte(0xFF00 + reg8[C]);
     m_cycle = 2;
-    //t_cycle = 8;
+
 	printf("[0x%04X] LD A,(C)\n",pc-1);
 }
 
@@ -3400,7 +3325,7 @@ void z80::f_0xF2() {
 void z80::f_0xF3() {
     ime = false;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] DI\n",pc-1);
 }
 
@@ -3415,7 +3340,7 @@ void z80::f_0xF5() {
     sp--;
     write_byte(sp, reg8[F]);
     m_cycle = 3;
-    //t_cycle = 12;
+
 	printf("[0x%04X] PUSH AF\n",pc-1);
 }
 
@@ -3427,7 +3352,7 @@ void z80::f_0xF6() {
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
 }
 
 // RST 30H
@@ -3438,7 +3363,7 @@ void z80::f_0xF7() {
     write_word(sp, pc);
     pc = 0x30;
     m_cycle = 3;
-    //t_cycle = 12;
+
 }
 
 // LD HL,SP+r8
@@ -3453,7 +3378,7 @@ void z80::f_0xF8() {
     reg8[H] = (i >> 8) & 0xFF;
     reg8[L] = i & 0xFF;
     m_cycle = 3;
-    //t_cycle = 12;
+
 }
 
 void z80::f_0xF9() {
@@ -3466,14 +3391,14 @@ void z80::f_0xFA() {
     reg8[A] = read_byte(read_word(pc));
     pc += 2;
     m_cycle = 4;
-    //t_cycle = 16;
+
 }
 
 // EI
 void z80::f_0xFB() {
     ime = true;
     m_cycle = 1;
-    //t_cycle = 4;
+
 	printf("[0x%04X] EI\n",pc-1);
 }
 
@@ -3501,7 +3426,7 @@ void z80::f_0xFE() {
     	reg8[F] |= HALF_CARRY_FLAG;
     }
     m_cycle = 2;
-    //t_cycle = 8;
+
 }
 
 // RST 38H
@@ -3512,7 +3437,7 @@ void z80::f_0xFF() {
     write_word(sp, pc);
     pc = 0x38;
     m_cycle = 3;
-    //t_cycle = 12;
+
 }
 
 
@@ -3527,7 +3452,7 @@ void z80::cb_0x00() {
     reg8[F] = (reg8[B]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RLC B\n",pc-1);
 }
 
@@ -3540,7 +3465,7 @@ void z80::cb_0x01() {
     reg8[F] = (reg8[C]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RLC C\n",pc-1);
 }
 
@@ -3553,7 +3478,7 @@ void z80::cb_0x02() {
     reg8[F] = (reg8[D]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RLC D\n",pc-1);
 }
 
@@ -3566,7 +3491,7 @@ void z80::cb_0x03() {
     reg8[F] = (reg8[E]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RLC E\n",pc-1);
 }
 
@@ -3579,7 +3504,7 @@ void z80::cb_0x04() {
     reg8[F] = (reg8[H]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RLC H\n",pc-1);
 }
 
@@ -3592,7 +3517,7 @@ void z80::cb_0x05() {
     reg8[F] = (reg8[L]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RLC L\n",pc-1);
 }
 
@@ -3607,7 +3532,7 @@ void z80::cb_0x06() {
     write_byte((reg8[H] << 8) + reg8[L], i);
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 4;
-    //t_cycle = 16;
+
     printf("[0x%04X] RLC HL\n",pc-1);
 }
 
@@ -3620,7 +3545,7 @@ void z80::cb_0x07() {
     reg8[F] = (reg8[A]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RLC A\n",pc-1);
 }
 
@@ -3633,7 +3558,7 @@ void z80::cb_0x08() {
     reg8[F] = (reg8[B]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RRC B\n",pc-1);
 }
 
@@ -3646,7 +3571,7 @@ void z80::cb_0x09() {
     reg8[F] = (reg8[C]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RRC C\n",pc-1);
 }
 
@@ -3659,7 +3584,7 @@ void z80::cb_0x0A() {
     reg8[F] = (reg8[D]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RRC D\n",pc-1);
 }
 
@@ -3672,7 +3597,7 @@ void z80::cb_0x0B() {
     reg8[F] = (reg8[E]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RRC E\n",pc-1);
 }
 
@@ -3685,7 +3610,7 @@ void z80::cb_0x0C() {
     reg8[F] = (reg8[H]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RRC H\n",pc-1);
 }
 
@@ -3698,7 +3623,7 @@ void z80::cb_0x0D() {
     reg8[F] = (reg8[L]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RRC L\n",pc-1);
 }
 
@@ -3713,7 +3638,7 @@ void z80::cb_0x0E() {
     reg8[F] = (i) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 4;
-    //t_cycle = 16;
+
     printf("[0x%04X] RRC (HL)\n",pc-1);
 }
 
@@ -3726,7 +3651,7 @@ void z80::cb_0x0F() {
     reg8[F] = (reg8[A]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RRC A\n",pc-1);
 }
 
@@ -3739,7 +3664,7 @@ void z80::cb_0x10() {
     reg8[F] = (reg8[B]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RL B\n",pc-1);
 }
 
@@ -3752,7 +3677,7 @@ void z80::cb_0x11() {
     reg8[F] = (reg8[C]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RL C\n",pc-1);
 }
 
@@ -3765,7 +3690,7 @@ void z80::cb_0x12() {
     reg8[F] = (reg8[D]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RL D\n",pc-1);
 }
 
@@ -3778,7 +3703,7 @@ void z80::cb_0x13() {
     reg8[F] = (reg8[E]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RL E\n",pc-1);
 }
 
@@ -3791,7 +3716,7 @@ void z80::cb_0x14() {
     reg8[F] = (reg8[H]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RL H\n",pc-1);
 }
 
@@ -3804,7 +3729,7 @@ void z80::cb_0x15() {
     reg8[F] = (reg8[L]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RL L\n",pc-1);
 }
 
@@ -3819,7 +3744,7 @@ void z80::cb_0x16() {
     write_byte((reg8[H] << 8) + reg8[L], i);
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 4;
-    //t_cycle = 16;
+
     printf("[0x%04X] RL (HL)\n",pc-1);
 }
 
@@ -3832,7 +3757,7 @@ void z80::cb_0x17() {
     reg8[F] = (reg8[A]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RL A\n",pc-1);
 }
 
@@ -3845,7 +3770,7 @@ void z80::cb_0x18() {
     reg8[F] = (reg8[B]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RR B\n",pc-1);
 }
 
@@ -3858,7 +3783,7 @@ void z80::cb_0x19() {
     reg8[F] = (reg8[C]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RR C\n",pc-1);
 }
 
@@ -3871,7 +3796,7 @@ void z80::cb_0x1A() {
     reg8[F] = (reg8[D]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RR D\n",pc-1);
 }
 
@@ -3884,7 +3809,7 @@ void z80::cb_0x1B() {
     reg8[F] = (reg8[E]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RR E\n",pc-1);
 }
 
@@ -3897,7 +3822,7 @@ void z80::cb_0x1C() {
     reg8[F] = (reg8[H]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RR H\n",pc-1);
 }
 
@@ -3910,7 +3835,7 @@ void z80::cb_0x1D() {
     reg8[F] = (reg8[L]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RR L\n",pc-1);
 }
 
@@ -3925,7 +3850,7 @@ void z80::cb_0x1E() {
     reg8[F] = (i) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 4;
-    //t_cycle = 16;
+
     printf("[0x%04X] RR (HL)\n",pc-1);
 }
 
@@ -3938,7 +3863,7 @@ void z80::cb_0x1F() {
     reg8[F] = (reg8[A]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] RR A\n",pc-1);
 }
 
@@ -3949,7 +3874,7 @@ void z80::cb_0x20() {
     reg8[F] = (reg8[B]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SLA B\n",pc-1);
 }
 
@@ -3960,7 +3885,7 @@ void z80::cb_0x21() {
     reg8[F] = (reg8[C]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SLA C\n",pc-1);
 }
 
@@ -3971,7 +3896,7 @@ void z80::cb_0x22() {
     reg8[F] = (reg8[D]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SLA D\n",pc-1);
 }
 
@@ -3982,7 +3907,7 @@ void z80::cb_0x23() {
     reg8[F] = (reg8[E]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SLA E\n",pc-1);
 }
 
@@ -3993,7 +3918,7 @@ void z80::cb_0x24() {
     reg8[F] = (reg8[H]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SLA H\n",pc-1);
 }
 
@@ -4004,7 +3929,7 @@ void z80::cb_0x25() {
     reg8[F] = (reg8[L]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SLA L\n",pc-1);
 }
 
@@ -4019,7 +3944,7 @@ void z80::cb_0x27() {
     reg8[F] = (reg8[A]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SLA A\n",pc-1);
 }
 
@@ -4031,7 +3956,7 @@ void z80::cb_0x28() {
     reg8[F] = (reg8[B]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SRA B\n",pc-1);
 }
 
@@ -4043,7 +3968,7 @@ void z80::cb_0x29() {
     reg8[F] = (reg8[C]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SRA C\n",pc-1);
 }
 
@@ -4055,7 +3980,7 @@ void z80::cb_0x2A() {
     reg8[F] = (reg8[D]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SRA D\n",pc-1);
 }
 
@@ -4067,7 +3992,7 @@ void z80::cb_0x2B() {
     reg8[F] = (reg8[E]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SRA E\n",pc-1);
 }
 
@@ -4079,7 +4004,7 @@ void z80::cb_0x2C() {
     reg8[F] = (reg8[H]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SRA H\n",pc-1);
 }
 
@@ -4091,7 +4016,7 @@ void z80::cb_0x2D() {
     reg8[F] = (reg8[L]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SRA L\n",pc-1);
 }
 
@@ -4107,7 +4032,7 @@ void z80::cb_0x2F() {
     reg8[F] = (reg8[A]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SRA A\n",pc-1);
 }
 
@@ -4117,7 +4042,7 @@ void z80::cb_0x30() {
     reg8[B] = ((tr & 0xF) << 4) | ((tr & 0xF0) >> 4);
     reg8[F] = reg8[B] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 16;
+
     printf("[0x%04X] SWAP B\n",pc-1);
 }
 
@@ -4127,7 +4052,7 @@ void z80::cb_0x31() {
     reg8[C] = ((tr & 0xF) << 4) | ((tr & 0xF0) >> 4);
     reg8[F] = reg8[C] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 16;
+
     printf("[0x%04X] SWAP C\n",pc-1);
 }
 
@@ -4137,7 +4062,7 @@ void z80::cb_0x32() {
     reg8[D] = ((tr & 0xF) << 4) | ((tr & 0xF0) >> 4);
     reg8[F] = reg8[D] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 16;
+
     printf("[0x%04X] SWAP D\n",pc-1);
 }
 
@@ -4147,7 +4072,7 @@ void z80::cb_0x33() {
     reg8[E] = ((tr & 0xF) << 4) | ((tr & 0xF0) >> 4);
     reg8[F] = reg8[E] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 16;
+
     printf("[0x%04X] SWAP E\n",pc-1);
 }
 
@@ -4157,7 +4082,7 @@ void z80::cb_0x34() {
     reg8[H] = ((tr & 0xF) << 4) | ((tr & 0xF0) >> 4);
     reg8[F] = reg8[H] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 16;
+
     printf("[0x%04X] SWAP H\n",pc-1);
 }
 
@@ -4167,7 +4092,7 @@ void z80::cb_0x35() {
     reg8[L] = ((tr & 0xF) << 4) | ((tr & 0xF0) >> 4);
     reg8[F] = reg8[L] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 16;
+
 }
 
 void z80::cb_0x36() {
@@ -4180,7 +4105,7 @@ void z80::cb_0x37() {
     reg8[A] = ((tr & 0xF) << 4) | ((tr & 0xF0) >> 4);
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
     m_cycle = 1;
-    //t_cycle = 16;
+
     printf("[0x%04X] SWAP A\n",pc-1);
 }
 
@@ -4191,7 +4116,7 @@ void z80::cb_0x38() {
     reg8[F] = (reg8[B]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SRL B\n",pc-1);
 }
 
@@ -4202,7 +4127,7 @@ void z80::cb_0x39() {
     reg8[F] = (reg8[C]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-     //t_cycle = 8;
+
     printf("[0x%04X] SRL C\n",pc-1);
 }
 
@@ -4213,7 +4138,7 @@ void z80::cb_0x3A() {
     reg8[F] = (reg8[D]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SRL D\n",pc-1);
 }
 
@@ -4224,7 +4149,7 @@ void z80::cb_0x3B() {
     reg8[F] = (reg8[E]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SRL E\n",pc-1);
 }
 
@@ -4235,7 +4160,7 @@ void z80::cb_0x3C() {
     reg8[F] = (reg8[H]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SRL H\n",pc-1);
 }
 
@@ -4246,7 +4171,7 @@ void z80::cb_0x3D() {
     reg8[F] = (reg8[L]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SRL L\n",pc-1);
 }
 
@@ -4261,7 +4186,7 @@ void z80::cb_0x3F() {
     reg8[F] = (reg8[A]) ? 0 : ZERO_FLAG;
     reg8[F] = (reg8[F] & 0xEF) + co;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] SRL A\n",pc-1);
 }
 
@@ -4271,7 +4196,7 @@ void z80::cb_0x40() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[B] & 0x01) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 0,B\n",pc-1);
 }
 
@@ -4281,7 +4206,7 @@ void z80::cb_0x41() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[C] & 0x01) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 0,C\n",pc-1);
 }
 
@@ -4291,7 +4216,7 @@ void z80::cb_0x42() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[D] & 0x01) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 0,D\n",pc-1);
 }
 
@@ -4301,7 +4226,7 @@ void z80::cb_0x43() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[E] & 0x01) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 0,E\n",pc-1);
 }
 
@@ -4311,7 +4236,7 @@ void z80::cb_0x44() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[H] & 0x01) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 0,H\n",pc-1);
 }
 
@@ -4321,7 +4246,7 @@ void z80::cb_0x45() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[L] & 0x01) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 0,L\n",pc-1);
 }
 
@@ -4331,7 +4256,7 @@ void z80::cb_0x46() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (read_byte((reg8[H] << 8) + reg8[L]) & 0x01) ? 0 : ZERO_FLAG;
     m_cycle = 3;
-    //t_cycle = 12;
+
     printf("[0x%04X] BIT 0,(HL)\n",pc-1);
 }
 
@@ -4341,7 +4266,7 @@ void z80::cb_0x47() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[A] & 0x01) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 0,A\n",pc-1);
 }
 
@@ -4351,7 +4276,7 @@ void z80::cb_0x48() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[B] & 0x02) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 1,B\n",pc-1);
 }
 
@@ -4361,7 +4286,7 @@ void z80::cb_0x49() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[C] & 0x02) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 1,C\n",pc-1);
 }
 
@@ -4371,7 +4296,7 @@ void z80::cb_0x4A() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[D] & 0x02) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 1,D\n",pc-1);
 }
 
@@ -4381,7 +4306,7 @@ void z80::cb_0x4B() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[E] & 0x02) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 1,E\n",pc-1);
 }
 
@@ -4391,7 +4316,7 @@ void z80::cb_0x4C() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[H] & 0x02) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 1,H\n",pc-1);
 }
 
@@ -4401,7 +4326,7 @@ void z80::cb_0x4D() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[L] & 0x02) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 1,L\n",pc-1);
 }
 
@@ -4411,7 +4336,7 @@ void z80::cb_0x4E() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (read_byte((reg8[H] << 8) + reg8[L]) & 0x02) ? 0 : ZERO_FLAG;
     m_cycle = 3;
-    //t_cycle = 12;
+
     printf("[0x%04X] BIT 1,(HL)\n",pc-1);
 }
 
@@ -4421,7 +4346,7 @@ void z80::cb_0x4F() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[A] & 0x02) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 1,A\n",pc-1);
 }
 
@@ -4431,7 +4356,7 @@ void z80::cb_0x50() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[B] & 0x04) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 2,B\n",pc-1);
 }
 
@@ -4441,7 +4366,7 @@ void z80::cb_0x51() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[C] & 0x04) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 2,C\n",pc-1);
 }
 
@@ -4451,7 +4376,7 @@ void z80::cb_0x52() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[D] & 0x04) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 2,D\n",pc-1);
 }
 
@@ -4461,7 +4386,7 @@ void z80::cb_0x53() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[E] & 0x04) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 2,E\n",pc-1);
 }
 
@@ -4471,7 +4396,7 @@ void z80::cb_0x54() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[H] & 0x04) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 2,H\n",pc-1);
 }
 
@@ -4481,7 +4406,7 @@ void z80::cb_0x55() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[L] & 0x04) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 2,L\n",pc-1);
 }
 
@@ -4491,7 +4416,7 @@ void z80::cb_0x56() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (read_byte((reg8[H] << 8) + reg8[L]) & 0x04) ? 0 : ZERO_FLAG;
     m_cycle = 3;
-    //t_cycle = 12;
+
     printf("[0x%04X] BIT 2,(HL)\n",pc-1);
 }
 
@@ -4501,7 +4426,7 @@ void z80::cb_0x57() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[A] & 0x04) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 2,A\n",pc-1);
 }
 
@@ -4511,7 +4436,7 @@ void z80::cb_0x58() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[B] & 0x08) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 3,B\n",pc-1);
 }
 
@@ -4521,7 +4446,7 @@ void z80::cb_0x59() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[C] & 0x08) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 3,C\n",pc-1);
 }
 
@@ -4531,7 +4456,7 @@ void z80::cb_0x5A() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[D] & 0x08) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 3,D\n",pc-1);
 }
 
@@ -4541,7 +4466,7 @@ void z80::cb_0x5B() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[E] & 0x08) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 3,E\n",pc-1);
 }
 
@@ -4551,7 +4476,7 @@ void z80::cb_0x5C() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[H] & 0x08) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 3,H\n",pc-1);
 }
 
@@ -4561,7 +4486,7 @@ void z80::cb_0x5D() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[L] & 0x08) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 3,L\n",pc-1);
 }
 
@@ -4571,7 +4496,7 @@ void z80::cb_0x5E() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (read_byte((reg8[H] << 8) + reg8[L]) & 0x08) ? 0 : ZERO_FLAG;
     m_cycle = 3;
-    //t_cycle = 12;
+
     printf("[0x%04X] BIT 3,(HL)\n",pc-1);
 }
 
@@ -4581,7 +4506,7 @@ void z80::cb_0x5F() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[A] & 0x08) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 3,A\n",pc-1);
 }
 
@@ -4591,7 +4516,7 @@ void z80::cb_0x60() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[B] & CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 4,B\n",pc-1);
 }
 
@@ -4601,7 +4526,7 @@ void z80::cb_0x61() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[C] & CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 4,C\n",pc-1);
 }
 
@@ -4611,7 +4536,7 @@ void z80::cb_0x62() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[D] & CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 4,D\n",pc-1);
 }
 
@@ -4621,7 +4546,7 @@ void z80::cb_0x63() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[E] & CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 4,E\n",pc-1);
 }
 
@@ -4631,7 +4556,7 @@ void z80::cb_0x64() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[H] & CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 4,H\n",pc-1);
 }
 
@@ -4641,7 +4566,7 @@ void z80::cb_0x65() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[L] & CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 4,L\n",pc-1);
 }
 
@@ -4651,7 +4576,7 @@ void z80::cb_0x66() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (read_byte((reg8[H] << 8) + reg8[L]) & CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 3;
-    //t_cycle = 12;
+
     printf("[0x%04X] BIT 4,(HL)\n",pc-1);
 }
 
@@ -4661,7 +4586,7 @@ void z80::cb_0x67() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[A] & CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 4,A\n",pc-1);
 }
 
@@ -4671,7 +4596,7 @@ void z80::cb_0x68() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[B] & HALF_CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 5,B\n",pc-1);
 }
 
@@ -4681,7 +4606,7 @@ void z80::cb_0x69() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[C] & HALF_CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 5,C\n",pc-1);
 }
 
@@ -4691,7 +4616,7 @@ void z80::cb_0x6A() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[D] & HALF_CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 5,D\n",pc-1);
 }
 
@@ -4701,7 +4626,7 @@ void z80::cb_0x6B() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[E] & HALF_CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 5,E\n",pc-1);
 }
 
@@ -4711,7 +4636,7 @@ void z80::cb_0x6C() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[H] & HALF_CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 5,H\n",pc-1);
 }
 
@@ -4721,7 +4646,7 @@ void z80::cb_0x6D() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[L] & HALF_CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 5,L\n",pc-1);
 }
 
@@ -4731,7 +4656,7 @@ void z80::cb_0x6E() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (read_byte((reg8[H] << 8) + reg8[L]) & HALF_CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 3;
-    //t_cycle = 12;
+
     printf("[0x%04X] BIT 5,(HL)\n",pc-1);
 }
 
@@ -4741,7 +4666,7 @@ void z80::cb_0x6F() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[A] & HALF_CARRY_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 5,A\n",pc-1);
 }
 
@@ -4751,7 +4676,7 @@ void z80::cb_0x70() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[B] & SUBTRACT_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 6,B\n",pc-1);
 }
 
@@ -4761,7 +4686,7 @@ void z80::cb_0x71() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[C] & SUBTRACT_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 6,C\n",pc-1);
 }
 
@@ -4771,7 +4696,7 @@ void z80::cb_0x72() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[D] & SUBTRACT_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 6,D\n",pc-1);
 }
 
@@ -4781,7 +4706,7 @@ void z80::cb_0x73() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[E] & SUBTRACT_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 6,E\n",pc-1);
 }
 
@@ -4791,7 +4716,7 @@ void z80::cb_0x74() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[H] & SUBTRACT_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 6,H\n",pc-1);
 }
 
@@ -4801,7 +4726,7 @@ void z80::cb_0x75() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[L] & SUBTRACT_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 6,LB\n",pc-1);
 }
 
@@ -4811,7 +4736,7 @@ void z80::cb_0x76() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (read_byte((reg8[H] << 8) + reg8[L]) & SUBTRACT_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 3;
-    //t_cycle = 12;
+
     printf("[0x%04X] BIT 6,(HL)\n",pc-1);
 }
 
@@ -4821,7 +4746,7 @@ void z80::cb_0x77() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[A] & SUBTRACT_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 6,A\n",pc-1);
 }
 
@@ -4831,7 +4756,7 @@ void z80::cb_0x78() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[B] & ZERO_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 7,B\n",pc-1);
 }
 
@@ -4841,7 +4766,7 @@ void z80::cb_0x79() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[C] & ZERO_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 7,C\n",pc-1);
 }
 
@@ -4851,7 +4776,7 @@ void z80::cb_0x7A() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[D] & ZERO_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 7,D\n",pc-1);
 }
 
@@ -4861,7 +4786,7 @@ void z80::cb_0x7B() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[E] & ZERO_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 7,E\n",pc-1);
 }
 
@@ -4871,7 +4796,7 @@ void z80::cb_0x7C() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[H] & ZERO_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 7,H\n",pc-1);
 }
 
@@ -4881,7 +4806,7 @@ void z80::cb_0x7D() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[L] & ZERO_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 7,L\n",pc-1);
 }
 
@@ -4891,7 +4816,7 @@ void z80::cb_0x7E() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (read_byte((reg8[H] << 8) + reg8[L]) & ZERO_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 3;
-    //t_cycle = 12;
+
     printf("[0x%04X] BIT 7,(HL)\n",pc-1);
 }
 
@@ -4901,7 +4826,7 @@ void z80::cb_0x7F() {
     reg8[F] |= HALF_CARRY_FLAG;
     reg8[F] = (reg8[A] & ZERO_FLAG) ? 0 : ZERO_FLAG;
     m_cycle = 2;
-    //t_cycle = 8;
+
     printf("[0x%04X] BIT 7,A\n",pc-1);
 }
 

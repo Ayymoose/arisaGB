@@ -79,7 +79,8 @@ void gpu::clear_screen(int colour) {
 	memset(screen,colour,SCREEN_WIDTH*SCREEN_HEIGHT);
 }
 
-void gpu::update_tile(int address, int value) {
+// TODO: Test
+void gpu::update_tile(int address/*, int value*/) {
 
 	// Get base address
 	address &= 0x1FEE;
@@ -104,7 +105,8 @@ void gpu::update_tile(int address, int value) {
 	}
 }
 
-// TODO: Complete
+// TODO: Complete and test
+// Renders a single scan line
 void gpu::render() {
 	int map;
 	// Select the tile map to draw from
@@ -114,32 +116,61 @@ void gpu::render() {
 		map = TILE_MAP_1;
 	}
 
-	// Tile index used is based on
+	// Tile index is calculated using
 	// SCX register
 	// SCY register
 	// Current line
+
 	// ANDing with 0xFF allows the y index to wrap
 	// Same with x index
-	int tile_index = ((((line + scy) & 0xFF) >> 3) << 5) + ((scx >> 3) & 0x1F);
+
+	int tile_x_offset = (scx >> 3);
+	int tile_index = ((((line + scy) & 0xFF) >> 3) << 5) + (tile_x_offset & 0x1F);
 
 	// Grab a tile from the current map
-	int tile = vram[VRAM + tile_index];
+	int tile = vram[map + tile_index];
 
-	//if (tile < 128)
+	// NOTE: I don't understand this?
+	if (bg_tile == 1 && tile < 128) {
+		tile += 256;
+	}
 
 	// Get the row and column of the tile to draw from
 	int tile_y = (line + scy) & (TILE_HEIGHT - 1);
 	int tile_x = scx & (TILE_WIDTH - 1);
 
-	// Get the colour of the current "pixel" in the tile
-	int tile_colour = tileset[tile_index][tile_y][tile_x];
+	for (int x=0; x<SCREEN_WIDTH; x++) {
 
-	for (int i=0; i<SCREEN_WIDTH; i++) {
+		// Get the colour of the current "pixel" in the tile
+		int pixel = tileset[tile_index][tile_y][tile_x];
+
 		// TODO: Apply pallete to pixel
+		// ...
+
+
+		// Draw pixel of current tile to screen
+		screen[SCREEN_WIDTH * line + x] = pixel;
+
+		// Draw next pixel until a complete tile row is drawn
+		tile_x++;
+		if (tile_x == TILE_WIDTH) {
+			tile_x  = 0;
+			tile_x_offset = (tile_x_offset + 1) & 0x1F;
+
+			// Grab the next tile
+			tile = vram[map + tile_x_offset];
+
+			// NOTE: I don't understand this?
+			if (bg_tile == 1 && tile < 128) {
+				tile += 256;
+			}
+		}
 
 	}
 }
 
+// TODO: Test
+// NOTE: ALL CLOCKS TAKE USE M CYCLES
 void gpu::step(int m_cycle) {
 	clock += m_cycle;
 	switch (mode) {
@@ -150,13 +181,14 @@ void gpu::step(int m_cycle) {
 				if (line == SCREEN_HEIGHT) {
 					mode = VBLANK;
 					// TODO: Write data to screen
+					fprintf(stderr,"Frame ready!\n");
 				} else {
 					mode = SCANLINE_OAM;
 				}
 			}
 	break;
 	case (VBLANK):
-		if (clock >= 456) {
+		if (clock >= 114) {
 			clock = 0;
 			line++;
 			if (line > 153) {
@@ -175,6 +207,7 @@ void gpu::step(int m_cycle) {
 			if (clock >= SCANLINE_VRAM_CYCLES) {
 				clock = 0;
 				mode = HBLANK;
+				fprintf(stderr,"Rendering scanline!\n");
 				render();
 			}
 	break;

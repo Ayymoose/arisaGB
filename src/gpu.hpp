@@ -12,13 +12,13 @@
 #define SCANLINE_OAM 2
 #define SCANLINE_VRAM 3
 
-#define HBLANK_CYCLES 204
-#define SCANLINE_OAM_CYCLES 80
-#define SCANLINE_VRAM_CYCLES 172
+#define HBLANK_CYCLES 51
+#define SCANLINE_OAM_CYCLES 20
+#define SCANLINE_VRAM_CYCLES 43
 
 // Tiles
-#define TILE_MAP_0 0x9800
-#define TILE_MAP_1 0x9C00
+#define TILE_MAP_0 0x1800
+#define TILE_MAP_1 0x1C00
 
 #define TILE_WIDTH 8
 #define TILE_HEIGHT 8
@@ -38,7 +38,7 @@ public:
 	void clear_screen(int colour);
 	void step(int m_cycle);
 	void reset();
-	void update_tile(int address, int value);
+	void update_tile(int address/*, int value*/);
 
 	int read_byte(int address);
 	void write_byte(int address, int byte);
