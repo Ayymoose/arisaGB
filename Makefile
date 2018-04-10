@@ -1,25 +1,26 @@
 CXX = g++
 CFLAGS = -std=c++11 -Wall -Wextra -g
 LDFLAGS := -L/usr/local/lib/ -lpthread -pthread
-INC = -Isrc -Itest/googletest/include -Itest
+INC = -Isrc -Itest
 
 BIN = bin
 SRC = src
-OBJ = $(addprefix $(BIN)/, main.o z80.o mmu.o rom.o)
+OBJ = $(addprefix $(BIN)/, main.o z80.o rom.o gpu.o gb.o)
 
 #-fsanitize=signed-integer-overflow -fsanitize-undefined-trap-on-error  -lgtest_main -lpthread 
 GTEST = test/googletest/make/gtest.a
+GINC = -Itest/googletest/include
 
-TST_OBJ = $(addprefix $(BIN)/, test_all.o z80.o rom.o mmu.o)
+TST_OBJ = $(addprefix $(BIN)/, test_all.o z80.o rom.o gpu.o gb.o)
 TST_SRC = test
 
-all: arisaGB tests
+all: arisaGB# tests
 
 arisaGB: $(OBJ)
 	$(CXX) $(INC) $(CFLAGS) $(OBJ) -o $(BIN)/arisaGB
 
 $(BIN)/%.o: $(SRC)/%.cpp    
-	$(CXX) $(INC) $(CFLAGS) $< -c -o $@
+	$(CXX) $(INC) $(GINC) $(CFLAGS) $< -c -o $@
 
 tests: $(TST_OBJ)
 	$(CXX) $(CFLAGS) $(TST_OBJ) $(GTEST) $(LDFLAGS) -o $(BIN)/tests

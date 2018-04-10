@@ -1,14 +1,16 @@
 #include "rom.hpp"
-#include "z80.hpp"
+//#include "z80.hpp"
+#include "gb.hpp"
 #include <iostream>
 
 int main() {
-	z80 cpu;
 	rom r;
+	gb gameboy;
 	try {
+
 		r.load_rom("/home/ayman/Desktop/arisaGB/rom/Legend of Zelda, The - Link's Awakening DX (U) (V1.2) [C][!].gbc");
-		cpu.load_rom(r);
-		cpu.dispatcher();
+		gameboy.load_rom(r);
+		gameboy.start();
 
 	} catch (const char *msg) {
 		std::cout << msg << std::endl;

@@ -18,7 +18,6 @@
 #define ROM_MAX_SIZE (2<<22)
 
 class z80;
-
 class rom {
 
 	public:
@@ -27,7 +26,7 @@ class rom {
 		// Load a ROM from file into memory 
 		void load_rom(std::string file_name);
 
-		friend z80;
+		friend class z80;
 
 		// Debug function
 		// Reference to magic numbers 

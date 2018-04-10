@@ -38,7 +38,7 @@
 		}*/
 	}
 
-	TEST(MMU,Memory) {
+	TEST(Z80,Memory) {
 		mmu m;
 
 		m.write_byte(0xEE00,0xAA);
