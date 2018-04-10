@@ -21,19 +21,24 @@
 #define CB_PREFIX 256
 #define ENTRY_POINT 0x0100
 
-
 #define MEMORY_MAX 65535
 #define BANK_SIZE 16384
 
+// Number of "machine" cycles per frame
+// 1 full frame is 70224 clock cycles
+// 1 machine cycle = 4 clock cycles
+// 70224 / 4 = 17556
+#define FRAME_CYCLES 17556
 
-class mmu;
 class z80 {
 
     public:
         z80();
         ~z80();
 		void reset();
-		void load_rom(const rom &r);
+
+		// Loads a 16KB bank into slot 0
+		void load_bank(const rom &r);
 		void execute();
 
 		// Memory related functions
@@ -50,6 +55,7 @@ class z80 {
 
     private:
 		FRIEND_TEST(Z80, Instructions);
+		friend class gb;
 
 		gpu gb_gpu;
         int reg8[REGISTERS];    // 8/16-bit registers

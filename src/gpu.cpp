@@ -1,17 +1,67 @@
 #include <cstring>
+#include <cstdio>
+
 #include "gpu.hpp"
 
 gpu::gpu() {
 	reset();
 }
 
+int gpu::read_byte(int address) {
+	switch (address) {
+	case GPU_LCD:
+		return (bg ? 0x01 : 0x00) | (bg_map ? 0x08 : 0x00) | (bg_tile ? 0x10 : 0x00) | (lcd ? 0x80 : 0x00);
+		break;
+	case GPU_SCY:
+		return scy;
+		break;
+	case GPU_SCX:
+		return scx;
+		break;
+	case GPU_LINE:
+		return line;
+		break;
+	default:
+		fprintf(stderr,"GPU register read at 0x%04X\n",address);
+		return 0;
+	}
+}
+
+void gpu::write_byte(int address, int byte) {
+	switch (address) {
+	case GPU_LCD:
+		bg = (byte & 0x01) ? 1 : 0;
+		bg_map = (byte & 0x08) ? 1 : 0;
+		bg_tile = (byte & 0x10) ? 1 : 0;
+		lcd = (byte & 0x80) ? 1 : 0;
+		break;
+	case GPU_SCY:
+		scy = byte;
+		break;
+	case GPU_SCX:
+		scx = byte;
+		break;
+	case GPU_PALLETE:
+		//TODO: Implement pallete
+		fprintf(stderr,"Pallete not done!\n");
+		//throw "Pallete not done!";
+		break;
+	default: fprintf(stderr,"GPU register write at 0x%04X\n",address);
+	}
+}
+
 void gpu::reset() {
 	mode = 0;
-	line = 0;
 	clock = 0;
 	scx = 0;
 	scy = 0;
+	bg_map = 0;
+	bg_tile = 0;
+	line = 0;
+	pallete = 0;
 	bg = 0;
+	lcd = 0;
+
 	// Clear VRAM
 	memset(vram,0x00,sizeof(int) * VRAM_SIZE);
 
@@ -54,6 +104,7 @@ void gpu::update_tile(int address, int value) {
 	}
 }
 
+// TODO: Complete
 void gpu::render() {
 	int map;
 	// Select the tile map to draw from
@@ -74,12 +125,19 @@ void gpu::render() {
 	// Grab a tile from the current map
 	int tile = vram[VRAM + tile_index];
 
+	//if (tile < 128)
+
 	// Get the row and column of the tile to draw from
 	int tile_y = (line + scy) & (TILE_HEIGHT - 1);
 	int tile_x = scx & (TILE_WIDTH - 1);
 
 	// Get the colour of the current "pixel" in the tile
 	int tile_colour = tileset[tile_index][tile_y][tile_x];
+
+	for (int i=0; i<SCREEN_WIDTH; i++) {
+		// TODO: Apply pallete to pixel
+
+	}
 }
 
 void gpu::step(int m_cycle) {

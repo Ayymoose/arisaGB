@@ -24,6 +24,13 @@
 #define TILE_HEIGHT 8
 #define TILE_MAX 384
 
+// GPU registers
+#define GPU_LCD 0xFF40
+#define GPU_SCY 0xFF42
+#define GPU_SCX 0xFF43
+#define GPU_LINE 0xFF44
+#define GPU_PALLETE 0xFF47
+
 class gpu {
 
 public:
@@ -32,27 +39,37 @@ public:
 	void step(int m_cycle);
 	void reset();
 	void update_tile(int address, int value);
+
+	int read_byte(int address);
+	void write_byte(int address, int byte);
+
 private:
 	void render();
 
 	friend class z80;
 
 	int mode;	// Current GPU mode
-	int line;	// Current scanline
 	int clock;	// Internal clock
-	int scx;	// Scroll register X
-	int scy;	// Scroll register Y
-	int bg;		// Background pallete register
+
+	// GPU registers
+	int scx;		// Scroll register X
+	int scy;		// Scroll register Y
+	int bg_map;		// Background map register
+	int bg_tile;	// Background tile register
+	int line;		// Current scanline
+	int pallete;	// Pallete register
+	int bg;			// Background register
+	int lcd;		// LCD register
 
 	unsigned char tileset[TILE_MAX][TILE_WIDTH][TILE_HEIGHT]; // Internal tileset
-	int vram[VRAM_SIZE];	//8KB of VRAM which holds signed and unsigned bytes
+	int vram[VRAM_SIZE];									  // 8KB of VRAM which holds signed and unsigned bytes
 	unsigned char screen[SCREEN_WIDTH*SCREEN_HEIGHT];
 
 	/*
-	 * 256 8x8 unique tiles in map
-	 * Tile map 0 (-128 to 127)
-	 * Tile map 1 (0 to 255)
-	 * Each map holds maximum 32x32 tiles
+	 * 256 8x8 unique tiles in screen
+	 * Tile map 0 (-128 to 127) (signed)
+	 * Tile map 1 (0 to 255) (unsigned)
+	 * Each map holds maximum 32x32 (384) tiles
 	 */
 };
 

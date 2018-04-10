@@ -1,6 +1,6 @@
 #include "rom.hpp"
-//#include "z80.hpp"
 #include "gb.hpp"
+
 #include <iostream>
 
 int main() {
@@ -8,7 +8,7 @@ int main() {
 	gb gameboy;
 	try {
 
-		r.load_rom("/home/ayman/Desktop/arisaGB/rom/Legend of Zelda, The - Link's Awakening DX (U) (V1.2) [C][!].gbc");
+		r.load_rom("/home/ayman/Desktop/arisaGB/rom/ttt.gb");
 		gameboy.load_rom(r);
 		gameboy.start();
 

@@ -4,7 +4,6 @@
 #include "gpu.hpp"
 
 /*
-
 	[0x0000-0x3FFF] Cartridge ROM, bank 0
 	[0x4000-0x7FFF] Cartridge ROM, other banks
 	[0x8000-0x9FFF] Graphics RAM
@@ -27,42 +26,99 @@
 #define MMIO 0xFF00
 #define ZERO_PAGE_RAM 0xFF80
 
-
-
-// Read and write 1 byte (8-bits)
+// Write 1 byte (8-bits)
 void z80::write_byte(int address, int byte) {
-	// TODO: Complete
 	switch (address & 0xF000) {
+	case CARTRIDGE_ROM_0:
+	case 0x1000:
+	case 0x2000:
+	case 0x3000:
+	case CARTRIDGE_ROM_E:
+	case 0x5000:
+	case 0x6000:
+	case 0x7000:
+		memory[address] = byte;
+		break;
 	case VRAM:
-	case 9000:
+	case 0x9000:
 		gb_gpu.vram[address & 0x1FFF] = byte;
 		gb_gpu.update_tile(address, byte);
 		break;
-	default: memory[address] = byte;
+	case CARTRIDGE_RAM:
+	case 0xB000:
+	case WRAM:
+	case 0xD000:
+	case WRAM_SHADOW:
+	case 0xF000:
+		if (address >= ZERO_PAGE_RAM) {
+			memory[address] = byte;
+		} else {
+			switch (address & 0xF0) {
+			case 0x40:
+			case 0x50:
+			case 0x60:
+			case 0x70:
+				gb_gpu.write_byte(address,byte);
+				break;
+			default: fprintf(stderr,"GPU register write at 0x%04X\n",address);
+			}
+		}
+		break;
+	default:
+			fprintf(stderr,"Memory write at 0x%04X\n",address);
 	}
 
 }
 
+// Read 1 byte (8-bits)
 int z80::read_byte(int address) {
-	// TODO: Complete
-	if (in_bios) {
-		if (address < 0x100) {
-			return bios[address];
-		} else if (address == 0x100) {
-			in_bios = false;
+	switch (address & 0xF000) {
+	case CARTRIDGE_ROM_0:
+		if (in_bios) {
+			if (address < 0x100) {
+				return bios[address];
+			} else if (address == 0x100) {
+				in_bios = false;
+			}
 		}
-	}
-	// Graphics: object attribute memory
-	// OAM is 160 bytes, remaining bytes read as 0
-	if (address > 0xFEA0 && address < 0xFE9F) {
+		return memory[address];
+		break;
+	case 0x1000:
+	case 0x2000:
+	case 0x3000:
+	case CARTRIDGE_ROM_E:
+	case 0x5000:
+	case 0x6000:
+	case 0x7000:
+		return memory[address];
+		break;
+	case VRAM:
+	case 0x9000:
+		return gb_gpu.vram[address & 0x1FFF];
+		break;
+	case CARTRIDGE_RAM:
+	case 0xB000:
+	case WRAM:
+	case 0xD000:
+	case WRAM_SHADOW:
+	case 0xF000:
+		if (address >= ZERO_PAGE_RAM) {
+			return memory[address];
+		}
+		// Graphics: object attribute memory
+		// OAM is 160 bytes, remaining bytes read as 0
+		if (address > 0xFEA0 && address < 0xFE9F) {
+			return 0;
+		}
+		// Memory mapped IO
+		if (address > 0xFF00 && address < 0xFF7F) {
+			return gb_gpu.read_byte(address);
+		}
+		fprintf(stderr,"Return 0 on 0x%04X\n",address);
 		return 0;
+		break;
+	default: return memory[address];
 	}
-	// Memory mapped IO
-	// TODO: Complete
-	if (address > 0xFF00 && address < 0xFF7F) {
-		return 0;
-	}
-	return memory[address];
 }
 
 
@@ -83,12 +139,18 @@ int z80::read_word(int address) {
 #define HALF_CARRY_FLAG 0x20	// Set if, in the result of the last operation, the lower half of the byte overflowed past 15;
 #define CARRY_FLAG 0x10			// Set if the last operation produced a result over 0xFF (for additions) or under 0 (for subtractions).
 
-// NOTE: This loads 64k of the rom into the entire MMU
-// FIXME: This should only load 1 bank (16k) in the mmu from 0x0000
-// Load the rom into the mmu
-void z80::load_rom(const rom &r) {
-	memcpy(memory,r.rom_data,MEMORY_MAX);
+// Loads a memory bank of 16K into memory
+void z80::load_bank(const rom &r) {
+	memcpy(memory,r.rom_data,BANK_SIZE);
 }
+
+void z80::execute() {
+	unsigned char instruction = read_byte(pc++);
+	(this->*opcodes[static_cast<int>(instruction)])();
+	clock_m += m_cycle;
+	gb_gpu.step(m_cycle);
+}
+
 
 z80::~z80() {
 
@@ -5805,18 +5867,8 @@ void z80::reset() {
 	in_bios = false;
 }
 
-void z80::execute() {
-	unsigned char instruction = read_byte(pc++);
-	(this->*opcodes[static_cast<int>(instruction)])();
-	clock_m += m_cycle;
-}
-
 
 void z80::t_execute(int instruction) {
 	pc++;
 	(this->*opcodes[instruction])();
 }
-
-
-
-	

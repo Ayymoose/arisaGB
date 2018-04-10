@@ -8,12 +8,13 @@ gb::gb() {
 // TODO: Complete
 // At present, loads 16kB into Bank 0
 void gb::load_rom(const rom& r) {
-
+	gb_cpu.load_bank(r);
 }
 void gb::start() {
-	for (int i=0; i<10; i++) {
+	int clock_max = gb_cpu.clock_m + FRAME_CYCLES;
+	do {
 		gb_cpu.execute();
-	}
+	} while (gb_cpu.clock_m < clock_max);
 }
 
 void gb::stop() {

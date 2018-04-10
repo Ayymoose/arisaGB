@@ -5,7 +5,6 @@
 #include "gtest/gtest_prod.h"
 
 #include "rom.hpp"
-#include "mmu.hpp"
 #include "z80.hpp"
 
 
@@ -39,15 +38,15 @@
 	}
 
 	TEST(Z80,Memory) {
-		mmu m;
+		z80 cpu;
 
-		m.write_byte(0xEE00,0xAA);
-		EXPECT_EQ(m.read_byte(0xEE00),0xAA);
+		cpu.write_byte(0xEE00,0xAA);
+		EXPECT_EQ(cpu.read_byte(0xEE00),0xAA);
 
-		m.write_word(0xAB00,0xCAFE);			//FE CA
-		EXPECT_EQ(m.read_word(0xAB00),0xCAFE);
-		EXPECT_EQ(m.read_byte(0xAB00),0xFE);
-		EXPECT_EQ(m.read_byte(0xAB01),0xCA);
+		cpu.write_word(0xAB00,0xCAFE);			//FE CA
+		EXPECT_EQ(cpu.read_word(0xAB00),0xCAFE);
+		EXPECT_EQ(cpu.read_byte(0xAB00),0xFE);
+		EXPECT_EQ(cpu.read_byte(0xAB01),0xCA);
 
 		// TODO: More tests
 	}
@@ -75,16 +74,16 @@
 		z.reg8[C] = 0x20;
 		z.reg8[A] = 0xAC;
 		z.t_execute(0x02);
-		EXPECT_EQ(z.mem8->memory[0x1020],0xAC);
+		EXPECT_EQ(z.memory[0x1020],0xAC);
 		/*z.reg8[A] = -20;
 		z.t_execute(0x02);
-		EXPECT_EQ(z.mem8->memory[0x1020],-20);*/
+		EXPECT_EQ(z.memory[0x1020],-20);*/
 		z.reg8[A] = 255;
 		z.t_execute(0x02);
-		EXPECT_EQ(z.mem8->memory[0x1020],255);
+		EXPECT_EQ(z.memory[0x1020],255);
 		/*z.reg8[A] = -128;
 		z.t_execute(0x02);
-		EXPECT_EQ(z.mem8->memory[0x1020],-128);*/
+		EXPECT_EQ(z.memory[0x1020],-128);*/
 
 		// TODO: INC BC
 
@@ -134,16 +133,16 @@
 		// LD A,(BC)
 		z.reg8[B] = 0x10;
 		z.reg8[C] = 0x20;
-		z.mem8->memory[0x1020] = 0x10;
+		z.memory[0x1020] = 0x10;
 		z.t_execute(0x0A);
 		EXPECT_EQ(z.reg8[A],0x10);
-		/*z.mem8->memory[0x1020] = -20;
+		/*z.memory[0x1020] = -20;
 		z.t_execute(0x0A);
 		EXPECT_EQ(z.reg8[A],-20);*/
-		z.mem8->memory[0x1020] = 255;
+		z.memory[0x1020] = 255;
 		z.t_execute(0x0A);
 		EXPECT_EQ(z.reg8[A],255);
-		/*z.mem8->memory[0x1020] = -128;
+		/*z.memory[0x1020] = -128;
 		z.t_execute(0x0A);
 		EXPECT_EQ(z.reg8[A],-128);*/
 
@@ -183,16 +182,16 @@
 		z.reg8[D] = 0x10;
 		z.reg8[E] = 0x20;
 		z.t_execute(0x12);
-		EXPECT_EQ(z.mem8->memory[0x1020],0x10);
+		EXPECT_EQ(z.memory[0x1020],0x10);
 		/*z.reg8[A] = -20;
 		z.t_execute(0x12);
-		EXPECT_EQ(z.mem8->memory[0x1020],-20);
+		EXPECT_EQ(z.memory[0x1020],-20);
 		z.reg8[A] = -128;
 		z.t_execute(0x12);
-		EXPECT_EQ(z.mem8->memory[0x1020],-128);*/
+		EXPECT_EQ(z.memory[0x1020],-128);*/
 		z.reg8[A] = 255;
 		z.t_execute(0x12);
-		EXPECT_EQ(z.mem8->memory[0x1020],255);
+		EXPECT_EQ(z.memory[0x1020],255);
 
 		// TODO: INC DE
 
@@ -242,16 +241,16 @@
 		// LD A,(DE)
 		z.reg8[D] = 0x10;
 		z.reg8[E] = 0x20;
-		z.mem8->memory[0x1020] = 0x10;
+		z.memory[0x1020] = 0x10;
 		z.t_execute(0x1A);
 		EXPECT_EQ(z.reg8[A],0x10);
-		/*z.mem8->memory[0x1020] = -20;
+		/*z.memory[0x1020] = -20;
 		z.t_execute(0x1A);
 		EXPECT_EQ(z.reg8[A],-20);*/
-		z.mem8->memory[0x1020] = 255;
+		z.memory[0x1020] = 255;
 		z.t_execute(0x1A);
 		EXPECT_EQ(z.reg8[A],255);
-		/*z.mem8->memory[0x1020] = -128;
+		/*z.memory[0x1020] = -128;
 		z.t_execute(0x1A);
 		EXPECT_EQ(z.reg8[A],-128);*/
 
@@ -494,18 +493,18 @@
 		EXPECT_EQ(z.reg8[B],-128);
 
 		// LD, B,(HL)
-		z.mem8->memory[0x1020] = 0x20;
+		z.memory[0x1020] = 0x20;
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
 		z.t_execute(0x46);
 		EXPECT_EQ(z.reg8[B],0x20);
-		/*z.mem8->memory[0x1020] = -20;
+		/*z.memory[0x1020] = -20;
 		z.t_execute(0x46);
 		EXPECT_EQ(z.reg8[B],-20);*/
-		z.mem8->memory[0x1020] = 127;
+		z.memory[0x1020] = 127;
 		z.t_execute(0x46);
 		EXPECT_EQ(z.reg8[B],127);
-		/*z.mem8->memory[0x1020] = -128;
+		/*z.memory[0x1020] = -128;
 		z.t_execute(0x46);
 		EXPECT_EQ(z.reg8[B],-128);*/
 
@@ -610,18 +609,18 @@
 		EXPECT_EQ(z.reg8[C],-128);
 
 		// LD, C,(HL)
-		z.mem8->memory[0x1020] = 0x20;
+		z.memory[0x1020] = 0x20;
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
 		z.t_execute(0x4E);
 		EXPECT_EQ(z.reg8[C],0x20);
-		/*z.mem8->memory[0x1020] = -20;
+		/*z.memory[0x1020] = -20;
 		z.t_execute(0x4E);
 		EXPECT_EQ(z.reg8[C],-20);*/
-		z.mem8->memory[0x1020] = 127;
+		z.memory[0x1020] = 127;
 		z.t_execute(0x4E);
 		EXPECT_EQ(z.reg8[C],127);
-		/*z.mem8->memory[0x1020] = -128;
+		/*z.memory[0x1020] = -128;
 		z.t_execute(0x4E);
 		EXPECT_EQ(z.reg8[C],-128);*/
 
@@ -726,18 +725,18 @@
 		EXPECT_EQ(z.reg8[D],-128);
 
 		// LD, D,(HL)
-		z.mem8->memory[0x1020] = 0x20;
+		z.memory[0x1020] = 0x20;
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
 		z.t_execute(0x56);
 		EXPECT_EQ(z.reg8[D],0x20);
-		/*z.mem8->memory[0x1020] = -20;
+		/*z.memory[0x1020] = -20;
 		z.t_execute(0x56);
 		EXPECT_EQ(z.reg8[D],-20);*/
-		z.mem8->memory[0x1020] = 127;
+		z.memory[0x1020] = 127;
 		z.t_execute(0x56);
 		EXPECT_EQ(z.reg8[D],127);
-		/*z.mem8->memory[0x1020] = -128;
+		/*z.memory[0x1020] = -128;
 		z.t_execute(0x56);
 		EXPECT_EQ(z.reg8[D],-128);*/
 
@@ -842,18 +841,18 @@
 		EXPECT_EQ(z.reg8[E],-128);
 
 		// LD, E,(HL)
-		z.mem8->memory[0x1020] = 0x20;
+		z.memory[0x1020] = 0x20;
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
 		z.t_execute(0x5E);
 		EXPECT_EQ(z.reg8[E],0x20);
-		/*z.mem8->memory[0x1020] = -20;
+		/*z.memory[0x1020] = -20;
 		z.t_execute(0x5E);
 		EXPECT_EQ(z.reg8[E],-20);*/
-		z.mem8->memory[0x1020] = 127;
+		z.memory[0x1020] = 127;
 		z.t_execute(0x5E);
 		EXPECT_EQ(z.reg8[E],127);
-		/*z.mem8->memory[0x1020] = -128;
+		/*z.memory[0x1020] = -128;
 		z.t_execute(0x5E);
 		EXPECT_EQ(z.reg8[E],-128);*/
 
@@ -958,20 +957,20 @@
 		EXPECT_EQ(z.reg8[H],-128);
 
 		// LD, H,(HL)
-		z.mem8->memory[0x1020] = 0x20;
+		z.memory[0x1020] = 0x20;
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
 		z.t_execute(0x66);
 		EXPECT_EQ(z.reg8[H],0x20);
-		/*z.mem8->memory[0x1020] = -20;
+		/*z.memory[0x1020] = -20;
 		z.t_execute(0x66);
 		EXPECT_EQ(z.reg8[H],-20);*/
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
-		z.mem8->memory[0x1020] = 127;
+		z.memory[0x1020] = 127;
 		z.t_execute(0x66);
 		EXPECT_EQ(z.reg8[H],127);
-		/*z.mem8->memory[0x1020] = -128;
+		/*z.memory[0x1020] = -128;
 		z.t_execute(0x66);
 		EXPECT_EQ(z.reg8[H],-128);*/
 
@@ -1076,18 +1075,18 @@
 		EXPECT_EQ(z.reg8[L],-128);
 
 		// LD, L,(HL)
-		z.mem8->memory[0x1020] = 0x20;
+		z.memory[0x1020] = 0x20;
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
 		z.t_execute(0x6E);
 		EXPECT_EQ(z.reg8[L],0x20);
-		/*z.mem8->memory[0x1020] = -20;
+		/*z.memory[0x1020] = -20;
 		z.t_execute(0x6E);
 		EXPECT_EQ(z.reg8[L],-20);*/
-		z.mem8->memory[0x1020] = 127;
+		z.memory[0x1020] = 127;
 		z.t_execute(0x6E);
 		EXPECT_EQ(z.reg8[L],127);
-		/*z.mem8->memory[0x1020] = -128;
+		/*z.memory[0x1020] = -128;
 		z.t_execute(0x6E);
 		EXPECT_EQ(z.reg8[L],-128);*/
 
@@ -1112,76 +1111,76 @@
 		z.reg8[L] = 0x20;
 		z.reg8[B] = 0x20;
 		z.t_execute(0x70);
-		EXPECT_EQ(z.mem8->memory[0x1020],0x20);
+		EXPECT_EQ(z.memory[0x1020],0x20);
 		/*z.reg8[B] = -20;
 		z.t_execute(0x70);
-		EXPECT_EQ(z.mem8->memory[0x1020],-20);*/
+		EXPECT_EQ(z.memory[0x1020],-20);*/
 		z.reg8[B] = 127;
 		z.t_execute(0x70);
-		EXPECT_EQ(z.mem8->memory[0x1020],127);
+		EXPECT_EQ(z.memory[0x1020],127);
 		/*z.reg8[B] = -128;
 		z.t_execute(0x70);
-		EXPECT_EQ(z.mem8->memory[0x1020],-128);*/
+		EXPECT_EQ(z.memory[0x1020],-128);*/
 
 		// LD (HL), C
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
 		z.reg8[C] = 0x20;
 		z.t_execute(0x71);
-		EXPECT_EQ(z.mem8->memory[0x1020],0x20);
+		EXPECT_EQ(z.memory[0x1020],0x20);
 		/*z.reg8[C] = -20;
 		z.t_execute(0x71);
-		EXPECT_EQ(z.mem8->memory[0x1020],-20);*/
+		EXPECT_EQ(z.memory[0x1020],-20);*/
 		z.reg8[C] = 127;
 		z.t_execute(0x71);
-		EXPECT_EQ(z.mem8->memory[0x1020],127);
+		EXPECT_EQ(z.memory[0x1020],127);
 		/*z.reg8[C] = -128;
 		z.t_execute(0x71);
-		EXPECT_EQ(z.mem8->memory[0x1020],-128);*/
+		EXPECT_EQ(z.memory[0x1020],-128);*/
 
 		// LD (HL), D
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
 		z.reg8[D] = 0x20;
 		z.t_execute(0x72);
-		EXPECT_EQ(z.mem8->memory[0x1020],0x20);
+		EXPECT_EQ(z.memory[0x1020],0x20);
 		/*z.reg8[D] = -20;
 		z.t_execute(0x72);
-		EXPECT_EQ(z.mem8->memory[0x1020],-20);*/
+		EXPECT_EQ(z.memory[0x1020],-20);*/
 		z.reg8[D] = 127;
 		z.t_execute(0x72);
-		EXPECT_EQ(z.mem8->memory[0x1020],127);
+		EXPECT_EQ(z.memory[0x1020],127);
 		/*z.reg8[D] = -128;
 		z.t_execute(0x72);
-		EXPECT_EQ(z.mem8->memory[0x1020],-128);*/
+		EXPECT_EQ(z.memory[0x1020],-128);*/
 
 		// LD (HL), E
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
 		z.reg8[E] = 0x20;
 		z.t_execute(0x73);
-		EXPECT_EQ(z.mem8->memory[0x1020],0x20);
+		EXPECT_EQ(z.memory[0x1020],0x20);
 		/*z.reg8[E] = -20;
 		z.t_execute(0x73);
-		EXPECT_EQ(z.mem8->memory[0x1020],-20);*/
+		EXPECT_EQ(z.memory[0x1020],-20);*/
 		z.reg8[E] = 127;
 		z.t_execute(0x73);
-		EXPECT_EQ(z.mem8->memory[0x1020],127);
+		EXPECT_EQ(z.memory[0x1020],127);
 		/*z.reg8[E] = -128;
 		z.t_execute(0x73);
-		EXPECT_EQ(z.mem8->memory[0x1020],-128);*/
+		EXPECT_EQ(z.memory[0x1020],-128);*/
 
 		// LD (HL), H
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
 		z.t_execute(0x74);
-		EXPECT_EQ(z.mem8->memory[0x1020],0x10);
+		EXPECT_EQ(z.memory[0x1020],0x10);
 
 		// LD (HL), L
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
 		z.t_execute(0x75);
-		EXPECT_EQ(z.mem8->memory[0x1020],0x20);
+		EXPECT_EQ(z.memory[0x1020],0x20);
 
 		// HALT
 		z.t_execute(0x76);
@@ -1192,16 +1191,16 @@
 		z.reg8[L] = 0x20;
 		z.reg8[A] = 0x20;
 		z.t_execute(0x77);
-		EXPECT_EQ(z.mem8->memory[0x1020],0x20);
+		EXPECT_EQ(z.memory[0x1020],0x20);
 		/*z.reg8[A] = -20;
 		z.t_execute(0x77);
-		EXPECT_EQ(z.mem8->memory[0x1020],-20);*/
+		EXPECT_EQ(z.memory[0x1020],-20);*/
 		z.reg8[A] = 127;
 		z.t_execute(0x77);
-		EXPECT_EQ(z.mem8->memory[0x1020],127);
+		EXPECT_EQ(z.memory[0x1020],127);
 		/*z.reg8[A] = -128;
 		z.t_execute(0x77);
-		EXPECT_EQ(z.mem8->memory[0x1020],-128);*/
+		EXPECT_EQ(z.memory[0x1020],-128);*/
 
 		////
 
@@ -1290,18 +1289,18 @@
 		EXPECT_EQ(z.reg8[A],-128);
 
 		// LD, A,(HL)
-		z.mem8->memory[0x1020] = 0x20;
+		z.memory[0x1020] = 0x20;
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
 		z.t_execute(0x7E);
 		EXPECT_EQ(z.reg8[A],0x20);
-		/*z.mem8->memory[0x1020] = -20;
+		/*z.memory[0x1020] = -20;
 		z.t_execute(0x7E);
 		EXPECT_EQ(z.reg8[A],-20);*/
-		z.mem8->memory[0x1020] = 127;
+		z.memory[0x1020] = 127;
 		z.t_execute(0x7E);
 		EXPECT_EQ(z.reg8[A],127);
-		/*z.mem8->memory[0x1020] = -128;
+		/*z.memory[0x1020] = -128;
 		z.t_execute(0x7E);
 		EXPECT_EQ(z.reg8[A],-128);*/
 
@@ -1486,26 +1485,26 @@
 
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
-		z.mem8->memory[0x1020] = 0x10;
+		z.memory[0x1020] = 0x10;
 		z.reg8[A] = 0x20;
 		z.t_execute(0x86);
 		EXPECT_EQ(z.reg8[A],0x30);
 		z.reg8[A] = 150;
-		z.mem8->memory[0x1020] = 150;
+		z.memory[0x1020] = 150;
 		z.t_execute(0x86);
 		EXPECT_EQ(z.reg8[A],44);
 		EXPECT_EQ(z.reg8[F] & 0x10,0x10);
 		z.reg8[A] = -10;
-		z.mem8->memory[0x1020] = 10;
+		z.memory[0x1020] = 10;
 		z.t_execute(0x86);
 		EXPECT_EQ(z.reg8[A],0);
 		EXPECT_EQ(z.reg8[F] & 0x80,0x80);
 		/*z.reg8[A] = -10;
-		z.mem8->memory[0x1020] = -10;
+		z.memory[0x1020] = -10;
 		z.t_execute(0x86);
 		EXPECT_EQ(z.reg8[A],-20);*/
 		z.reg8[A] = 0x08;
-		z.mem8->memory[0x1020] = 0x08;
+		z.memory[0x1020] = 0x08;
 		z.t_execute(0x86);
 		EXPECT_EQ(z.reg8[A],16);
 		EXPECT_EQ(z.reg8[F] & 0x20,0x20);
@@ -1708,21 +1707,21 @@
 		z.reg8[A] = 0x50;
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
-		z.mem8->memory[0x1020] = 0x30;
+		z.memory[0x1020] = 0x30;
 		z.t_execute(0x96);
 		EXPECT_EQ(z.reg8[A],0x20);
 		/*z.reg8[A] = 150;
-		z.mem8->memory[0x1020] = 160;
+		z.memory[0x1020] = 160;
 		z.t_execute(0x96);
 		EXPECT_EQ(z.reg8[A],-10);
 		EXPECT_EQ(z.reg8[F] & 0x10,0x10);*/
 		z.reg8[A] = 10;
-		z.mem8->memory[0x1020] = 10;
+		z.memory[0x1020] = 10;
 		z.t_execute(0x96);
 		EXPECT_EQ(z.reg8[A],0);
 		EXPECT_EQ(z.reg8[F] & 0x80,0x80);
 		z.reg8[A] = -10;
-		z.mem8->memory[0x1020] = -20;
+		z.memory[0x1020] = -20;
 		z.t_execute(0x96);
 		EXPECT_EQ(z.reg8[A],10);
 		//TODO: Add test for half-carry flag on subtraction
@@ -1831,11 +1830,11 @@
 		z.reg8[A] = 0x10;
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
-		z.mem8->memory[0x1020] = 0x10;
+		z.memory[0x1020] = 0x10;
 		z.t_execute(0xA6);
 		EXPECT_EQ(z.reg8[A],0x10);
 		z.reg8[A] = 0x10;
-		z.mem8->memory[0x1020] = 0x01;
+		z.memory[0x1020] = 0x01;
 		z.t_execute(0xA6);
 		EXPECT_EQ(z.reg8[A],0);
 		EXPECT_EQ(z.reg8[F] & 0x80,0x80);
@@ -1927,11 +1926,11 @@
 		z.reg8[A] = 0x10;
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
-		z.mem8->memory[0x1020] = 0x20;
+		z.memory[0x1020] = 0x20;
 		z.t_execute(0xAE);
 		EXPECT_EQ(z.reg8[A],0x30);
 		z.reg8[A] = 0x10;
-		z.mem8->memory[0x1020] = 0x10;
+		z.memory[0x1020] = 0x10;
 		z.t_execute(0xAE);
 		EXPECT_EQ(z.reg8[A],0);
 		EXPECT_EQ(z.reg8[F] & 0x80,0x80);
@@ -2024,11 +2023,11 @@
 		z.reg8[A] = 0x10;
 		z.reg8[H] = 0x10;
 		z.reg8[L] = 0x20;
-		z.mem8->memory[0x1020] = 0x01;
+		z.memory[0x1020] = 0x01;
 		z.t_execute(0xB6);
 		EXPECT_EQ(z.reg8[A],0x11);
 		z.reg8[A] = 0x00;
-		z.mem8->memory[0x1020] = 0x00;
+		z.memory[0x1020] = 0x00;
 		z.t_execute(0xB6);
 		EXPECT_EQ(z.reg8[A],0);
 		EXPECT_EQ(z.reg8[F] & 0x80,0x80);
