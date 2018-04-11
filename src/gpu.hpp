@@ -36,6 +36,8 @@
 #define GPU_DMA 0xFF46 // TODO: Implement
 #define GPU_PALLETE 0xFF47
 
+
+
 class gpu {
 
 public:
@@ -59,8 +61,6 @@ private:
 	// Pushes a complete frame to a context
 	void push_frame();
 
-
-
 	int mode;	// Current GPU mode
 	int clock;	// Internal clock
 
@@ -73,6 +73,7 @@ private:
 	int pallete;	// Pallete register
 	int bg;			// Background register
 	int lcd;		// LCD register
+	int stat;		// STAT register
 
 	unsigned char tileset[TILE_MAX][TILE_WIDTH][TILE_HEIGHT]; // Internal tileset
 	int vram[VRAM_SIZE];									  // 8KB of VRAM which holds signed and unsigned bytes
@@ -87,3 +88,5 @@ private:
 };
 
 #endif
+
+

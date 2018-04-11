@@ -26,6 +26,10 @@ int gpu::read_byte(int address) {
 	case GPU_LCD:
 		return (bg ? 0x01 : 0x00) | (bg_map ? 0x08 : 0x00) | (bg_tile ? 0x10 : 0x00) | (lcd ? 0x80 : 0x00);
 		break;
+	case GPU_STAT:
+		fprintf(stderr,"GPU STAT register read\n");
+		return 0;
+		break;
 	case GPU_SCY:
 		return scy;
 		break;
@@ -49,6 +53,9 @@ void gpu::write_byte(int address, int byte) {
 		bg_tile = (byte & 0x10) ? 1 : 0;
 		lcd = (byte & 0x80) ? 1 : 0;
 		break;
+	case GPU_STAT:
+		fprintf(stderr,"GPU STAT register write\n");
+		break;
 	case GPU_SCY:
 		scy = byte;
 		break;
@@ -60,7 +67,7 @@ void gpu::write_byte(int address, int byte) {
 		fprintf(stderr,"Pallete not done!\n");
 		//throw "Pallete not done!";
 		break;
-	default: fprintf(stderr,"GPU register write at 0x%04X\n",address);
+	default: fprintf(stderr,"[GPU] GPU register write at 0x%04X\n",address);
 	}
 }
 
@@ -96,7 +103,7 @@ void gpu::reset() {
 void gpu::update_tile(int address) {
 
 	// Get base address
-	address &= 0x1FEE;
+	//address &= 0x1FFE;
 
 	// Find the tile index in the set
 	int tile = (address >> 4) & 0x01FF;
@@ -125,7 +132,7 @@ void gpu::push_frame() {
 // Renders a single scan line
 void gpu::render_scanline() {
 
-	fprintf(stderr,"Rendering scanline!\n");
+	//fprintf(stderr,"Rendering scanline!\n");
 
 	int map;
 	// Select the tile map to draw from

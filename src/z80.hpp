@@ -66,8 +66,8 @@ class z80 {
 		bool ime;				// Master interrupt
 		bool halt;				// Halting flag
 
-		// Memory
-		unsigned char memory[MEMORY_MAX];
+
+		unsigned char memory[MEMORY_MAX]; // 64KB of memory
 		bool in_bios;
 		const int bios[256] =
 		{

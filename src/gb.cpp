@@ -15,7 +15,8 @@ void gb::start() {
 	do {
 		gb_cpu.execute();
 	} while (gb_cpu.clock_m < clock_max);
-	gb_cpu.gb_gpu.dump_screen();
+	//gb_cpu.gb_gpu.dump_screen();
+
 }
 
 void gb::stop() {

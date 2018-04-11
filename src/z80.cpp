@@ -42,27 +42,32 @@ void z80::write_byte(int address, int byte) {
 	case VRAM:
 	case 0x9000:
 		gb_gpu.vram[address & 0x1FFF] = byte;
-		gb_gpu.update_tile(address);
+		gb_gpu.update_tile(address & 0x1FFF);
 		break;
 	case CARTRIDGE_RAM:
 	case 0xB000:
 	case WRAM:
 	case 0xD000:
 	case WRAM_SHADOW:
+		memory[address] = byte;
+		break;
 	case 0xF000:
+
+
 		if (address >= ZERO_PAGE_RAM) {
 			memory[address] = byte;
 		} else {
-			switch (address & 0xF0) {
-			case 0x40:
-			case 0x50:
-			case 0x60:
-			case 0x70:
+			switch (address & 0x00F0) {
+			case 0x0040:
+			case 0x0050:
+			case 0x0060:
+			case 0x0070:
 				gb_gpu.write_byte(address,byte);
 				break;
-			default: fprintf(stderr,"GPU register write at 0x%04X\n",address);
+			default: fprintf(stderr,"[Z80] GPU register write at 0x%04X\n",address);
 			}
 		}
+
 		break;
 	default:
 			fprintf(stderr,"Memory write at 0x%04X\n",address);
@@ -101,6 +106,8 @@ int z80::read_byte(int address) {
 	case WRAM:
 	case 0xD000:
 	case WRAM_SHADOW:
+		return memory[address];
+		break;
 	case 0xF000:
 		if (address >= ZERO_PAGE_RAM) {
 			return memory[address];
@@ -1026,7 +1033,12 @@ void z80::f_0x20() {
     if (i > 127) {
     	i = -((~i + 1) & 0xFF);
     }
-    printf("[0x%04X] JR NZ,0x%02X\n",pc-1,i);
+    if (i < 0) {
+    	printf("[0x%04X] JR NZ,%d\n",pc-1,i);
+    } else {
+    	printf("[0x%04X] JR NZ,0x%02X\n",pc-1,i);
+    }
+
     pc++;
     m_cycle = 2;
     if ((reg8[F] & ZERO_FLAG) == 0x00) {
@@ -1037,9 +1049,9 @@ void z80::f_0x20() {
 
 // LD HL,d16
 void z80::f_0x21() {
-	printf("[0x%04X] LD HL,0x%04X\n",pc-1,(reg8[H] << 8)+reg8[L]);
     reg8[L] = read_byte(pc);
     reg8[H] = read_byte(pc + 1);
+    printf("[0x%04X] LD HL,0x%04X\n",pc-1,(reg8[H] << 8)+reg8[L]);
     pc += 2;
     m_cycle = 3;
 }
@@ -2859,8 +2871,6 @@ void z80::f_0xCB() {
     int i = read_byte(pc);
     pc++;
     (this->*cb_opcodes[i])();
-    //std::cerr << "CB instruction not implemented: " << i << std::endl;
-    //throw "Exception thrown on unimplemented CB instruction";
 }
 
 // CALL Z,a16
