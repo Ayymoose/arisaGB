@@ -29,23 +29,23 @@ void rom::load_rom(std::string file_name) {
 	if (!rom_file.is_open()) {
 		throw "File couldn't be opened!";
 	}
-	int rom_size = rom_file.tellg();
-	if (rom_size == 0) {
+	int rom_size_file = rom_file.tellg();
+	if (rom_size_file == 0) {
 		throw "File size is 0!";
 	}
 	rom_file.clear();
 	rom_file.seekg(0, std::ios::beg);
 	
 	// Read entire rom to memory
-	rom_data = new unsigned char[rom_size];
+	rom_data = new unsigned char[rom_size_file];
 	// Read rom_size bytes!
 	// Read MAX size file
-	if (rom_size > ROM_MAX_SIZE) {
-		std::cerr << rom_size << " > " << ROM_MAX_SIZE << std::endl;
+	if (rom_size_file > ROM_MAX_SIZE) {
+		std::cerr << rom_size_file << " > " << ROM_MAX_SIZE << std::endl;
 		throw "File size too big!";
 	}
 	// TODO: Complete bytes read from here
-	rom_file.read(reinterpret_cast<char*>(rom_data), rom_size);
+	rom_file.read(reinterpret_cast<char*>(rom_data), rom_size_file);
 	rom_file.close();
 
 	// Check for Nintendo LOGO in ROM file

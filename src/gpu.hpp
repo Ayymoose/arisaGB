@@ -1,6 +1,8 @@
 #ifndef GPU_H
 #define GPU_H
 
+#include "gtest/gtest_prod.h"
+
 #define VRAM_SIZE 8192
 #define VRAM 0x8000
 #define SCREEN_WIDTH 160
@@ -26,16 +28,18 @@
 
 // GPU registers
 #define GPU_LCD 0xFF40
+#define GPU_STAT 0xFF41	// TODO: Implement
 #define GPU_SCY 0xFF42
 #define GPU_SCX 0xFF43
 #define GPU_LINE 0xFF44
+#define GPU_LYC 0xFF45 // TODO: Implement
+#define GPU_DMA 0xFF46 // TODO: Implement
 #define GPU_PALLETE 0xFF47
 
 class gpu {
 
 public:
 	gpu();
-	void clear_screen(int colour);
 	void step(int m_cycle);
 	void reset();
 	void update_tile(int address/*, int value*/);
@@ -43,10 +47,19 @@ public:
 	int read_byte(int address);
 	void write_byte(int address, int byte);
 
-private:
-	void render();
+	void dump_screen();
 
+private:
+	FRIEND_TEST(GPU, UpdateTile);
 	friend class z80;
+
+	// Writes a single scanline to the frame buffer
+	void render_scanline();
+
+	// Pushes a complete frame to a context
+	void push_frame();
+
+
 
 	int mode;	// Current GPU mode
 	int clock;	// Internal clock

@@ -8,7 +8,7 @@ int main() {
 	gb gameboy;
 	try {
 
-		r.load_rom("/home/ayman/Desktop/arisaGB/rom/ttt.gb");
+		r.load_rom("/home/ayman/Desktop/arisaGB/rom/opus5.gb");
 		gameboy.load_rom(r);
 		gameboy.start();
 

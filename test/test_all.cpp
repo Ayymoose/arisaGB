@@ -1,10 +1,12 @@
 #include <iostream>
 #include <cassert>
 #include <cstring>
+
 #include "gtest/gtest.h"
 #include "gtest/gtest_prod.h"
 
 #include "rom.hpp"
+#include "gpu.hpp"
 #include "z80.hpp"
 
 
@@ -40,22 +42,19 @@
 	TEST(Z80,Memory) {
 		z80 cpu;
 
-		cpu.write_byte(0xEE00,0xAA);
-		EXPECT_EQ(cpu.read_byte(0xEE00),0xAA);
+		cpu.write_byte(0x0000,0xAA);
+		EXPECT_EQ(cpu.read_byte(0x0000),0xAA);
 
-		cpu.write_word(0xAB00,0xCAFE);			//FE CA
-		EXPECT_EQ(cpu.read_word(0xAB00),0xCAFE);
-		EXPECT_EQ(cpu.read_byte(0xAB00),0xFE);
-		EXPECT_EQ(cpu.read_byte(0xAB01),0xCA);
+		cpu.write_word(0x0000,0xCAFE);			//FE CA
+		EXPECT_EQ(cpu.read_word(0x0000),0xCAFE);
+		EXPECT_EQ(cpu.read_byte(0x0000),0xFE);
+		EXPECT_EQ(cpu.read_byte(0x0001),0xCA);
 
 		// TODO: More tests
 	}
 
 	TEST(Z80, Instructions) {
 		z80 z;
-		rom r;
-		r.load_rom("/home/ayman/Desktop/arisaGB/rom/Legend of Zelda, The - Link's Awakening DX (U) (V1.2) [C][!].gbc");
-		z.load_rom(r);
 
 		// LD instructions
 		// 1. Load an unsigned value
@@ -2043,6 +2042,74 @@
 		EXPECT_EQ(z.reg8[F] & 0x80,0x80);
 
 		// TODO: CP tests
+
+	}
+
+	TEST(GPU,UpdateTile) {
+		gpu g;
+
+		int address = 0x0000;
+		g.vram[address] = 0xB4;
+		g.vram[address+1] = 0x6D;
+
+		for (int x=0; x<TILE_WIDTH; x++) {
+			int sx = 1 << ((TILE_WIDTH - 1) - x);
+			g.tileset[0][0][x] =
+					((g.vram[address] & sx) >> ((TILE_WIDTH - 1) - x))
+					+
+					(((g.vram[address+1] & sx) >> ((TILE_WIDTH - 1) - x)) << 1);
+		}
+
+		EXPECT_EQ(g.tileset[0][0][0],1);
+		EXPECT_EQ(g.tileset[0][0][1],2);
+		EXPECT_EQ(g.tileset[0][0][2],3);
+		EXPECT_EQ(g.tileset[0][0][3],1);
+		EXPECT_EQ(g.tileset[0][0][4],2);
+		EXPECT_EQ(g.tileset[0][0][5],3);
+		EXPECT_EQ(g.tileset[0][0][6],0);
+		EXPECT_EQ(g.tileset[0][0][7],2);
+
+		address = 0x0000;
+		g.vram[address] = 0x00;
+		g.vram[address+1] = 0x00;
+
+		for (int x=0; x<TILE_WIDTH; x++) {
+			int sx = 1 << ((TILE_WIDTH - 1) - x);
+			g.tileset[0][0][x] =
+					((g.vram[address] & sx) >> ((TILE_WIDTH - 1) - x))
+					+
+					(((g.vram[address+1] & sx) >> ((TILE_WIDTH - 1) - x)) << 1);
+		}
+
+		EXPECT_EQ(g.tileset[0][0][0],0);
+		EXPECT_EQ(g.tileset[0][0][1],0);
+		EXPECT_EQ(g.tileset[0][0][2],0);
+		EXPECT_EQ(g.tileset[0][0][3],0);
+		EXPECT_EQ(g.tileset[0][0][4],0);
+		EXPECT_EQ(g.tileset[0][0][5],0);
+		EXPECT_EQ(g.tileset[0][0][6],0);
+		EXPECT_EQ(g.tileset[0][0][7],0);
+
+		address = 0x0000;
+		g.vram[address] = 0xFF;
+		g.vram[address+1] = 0xFF;
+
+		for (int x=0; x<TILE_WIDTH; x++) {
+			int sx = 1 << ((TILE_WIDTH - 1) - x);
+			g.tileset[0][0][x] =
+					((g.vram[address] & sx) >> ((TILE_WIDTH - 1) - x))
+					+
+					(((g.vram[address+1] & sx) >> ((TILE_WIDTH - 1) - x)) << 1);
+		}
+
+		EXPECT_EQ(g.tileset[0][0][0],3);
+		EXPECT_EQ(g.tileset[0][0][1],3);
+		EXPECT_EQ(g.tileset[0][0][2],3);
+		EXPECT_EQ(g.tileset[0][0][3],3);
+		EXPECT_EQ(g.tileset[0][0][4],3);
+		EXPECT_EQ(g.tileset[0][0][5],3);
+		EXPECT_EQ(g.tileset[0][0][6],3);
+		EXPECT_EQ(g.tileset[0][0][7],3);
 
 	}
 

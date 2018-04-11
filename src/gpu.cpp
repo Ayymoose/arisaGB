@@ -1,7 +1,21 @@
 #include <cstring>
 #include <cstdio>
+#include <iostream>
 
 #include "gpu.hpp"
+
+// FIXME: Array out of bounds access
+void gpu::dump_screen() {
+	std::cout << "{";
+	for (int y=0; y<SCREEN_HEIGHT; y++) {
+		for (int x=0; x<SCREEN_WIDTH; x++) {
+			std::cout << (int)screen[SCREEN_WIDTH * y + x] << ",";
+		}
+		std::cout << std::endl;
+	}
+	std::cout << "}" << std::endl;
+}
+
 
 gpu::gpu() {
 	reset();
@@ -51,7 +65,7 @@ void gpu::write_byte(int address, int byte) {
 }
 
 void gpu::reset() {
-	mode = 0;
+	mode = SCANLINE_OAM;
 	clock = 0;
 	scx = 0;
 	scy = 0;
@@ -61,6 +75,9 @@ void gpu::reset() {
 	pallete = 0;
 	bg = 0;
 	lcd = 0;
+
+	// Clear screen
+	memset(screen,0x00,SCREEN_WIDTH*SCREEN_HEIGHT);
 
 	// Clear VRAM
 	memset(vram,0x00,sizeof(int) * VRAM_SIZE);
@@ -75,12 +92,8 @@ void gpu::reset() {
 	}
 }
 
-void gpu::clear_screen(int colour) {
-	memset(screen,colour,SCREEN_WIDTH*SCREEN_HEIGHT);
-}
-
 // TODO: Test
-void gpu::update_tile(int address/*, int value*/) {
+void gpu::update_tile(int address) {
 
 	// Get base address
 	address &= 0x1FEE;
@@ -104,10 +117,16 @@ void gpu::update_tile(int address/*, int value*/) {
 				(((vram[address+1] & sx) >> ((TILE_WIDTH - 1) - x)) << 1);
 	}
 }
+void gpu::push_frame() {
+	fprintf(stderr,"Frame ready!\n");
+}
 
 // TODO: Complete and test
 // Renders a single scan line
-void gpu::render() {
+void gpu::render_scanline() {
+
+	fprintf(stderr,"Rendering scanline!\n");
+
 	int map;
 	// Select the tile map to draw from
 	if (bg == 0) {
@@ -141,12 +160,9 @@ void gpu::render() {
 
 	for (int x=0; x<SCREEN_WIDTH; x++) {
 
-		// Get the colour of the current "pixel" in the tile
-		int pixel = tileset[tile_index][tile_y][tile_x];
-
-		// TODO: Apply pallete to pixel
-		// ...
-
+		// Get the 2-bit colour of the current "pixel" in the tile row
+		// [XX,XX,XX,XX,XX,XX,XX,XX]
+		unsigned char pixel = tileset[tile_index][tile_y][tile_x];
 
 		// Draw pixel of current tile to screen
 		screen[SCREEN_WIDTH * line + x] = pixel;
@@ -180,8 +196,7 @@ void gpu::step(int m_cycle) {
 				line++;
 				if (line == SCREEN_HEIGHT) {
 					mode = VBLANK;
-					// TODO: Write data to screen
-					fprintf(stderr,"Frame ready!\n");
+					push_frame();
 				} else {
 					mode = SCANLINE_OAM;
 				}
@@ -207,8 +222,7 @@ void gpu::step(int m_cycle) {
 			if (clock >= SCANLINE_VRAM_CYCLES) {
 				clock = 0;
 				mode = HBLANK;
-				fprintf(stderr,"Rendering scanline!\n");
-				render();
+				render_scanline();
 			}
 	break;
 	}
