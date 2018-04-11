@@ -33,10 +33,13 @@ void z80::write_byte(int address, int byte) {
 	case 0x1000:
 	case 0x2000:
 	case 0x3000:
+		memory[address] = byte;
+		break;
 	case CARTRIDGE_ROM_E:
 	case 0x5000:
 	case 0x6000:
 	case 0x7000:
+		fprintf(stderr,"Write to cartridge ROM 1 0x%04X\n",address);
 		memory[address] = byte;
 		break;
 	case VRAM:
@@ -91,10 +94,13 @@ int z80::read_byte(int address) {
 	case 0x1000:
 	case 0x2000:
 	case 0x3000:
+		return memory[address];
+		break;
 	case CARTRIDGE_ROM_E:
 	case 0x5000:
 	case 0x6000:
 	case 0x7000:
+		//fprintf(stderr,"Read from cartridge ROM 1 0x%04X\n",address);
 		return memory[address];
 		break;
 	case VRAM:
@@ -149,7 +155,7 @@ int z80::read_word(int address) {
 
 // Loads a memory bank of 16K into memory
 void z80::load_bank(const rom &r) {
-	memcpy(memory,r.rom_data,BANK_SIZE);
+	memcpy(memory,r.rom_data,BANK_SIZE*2);
 }
 
 void z80::execute() {
@@ -3108,9 +3114,9 @@ void z80::f_0xDF() {
 
 }
 
-// LDH (a8),A
+// LD (a8),A
 void z80::f_0xE0() {
-	printf("[0x%04X] LDH (0x%02X),A\n",pc-1,read_byte(pc));
+	printf("[0x%04X] LD (0x%04X),A\n",pc-1,0xFF00 + read_byte(pc));
     write_byte(0xFF00 + read_byte(pc), reg8[A]);
     pc++;
     m_cycle = 3;
@@ -3243,9 +3249,9 @@ void z80::f_0xEF() {
 
 }
 
-// LDH A,(a8)
+// LD A,(a8)
 void z80::f_0xF0() {
-	printf("[0x%04X] LDH A,(0x%02X)\n",pc-1,read_byte(pc));
+	printf("[0x%04X] LD A,(0x%04X)\n",pc-1,0xFF00 + read_byte(pc));
     reg8[A] = read_byte(0xFF00 + read_byte(pc));
     pc++;
     m_cycle = 3;

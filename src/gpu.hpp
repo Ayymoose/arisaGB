@@ -58,7 +58,8 @@ private:
 	// Writes a single scanline to the frame buffer
 	void render_scanline();
 
-	// Pushes a complete frame to a context
+	// Makes a full frame ready to be displayed
+	bool frame_ready;
 	void push_frame();
 
 	int mode;	// Current GPU mode

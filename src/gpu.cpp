@@ -21,14 +21,19 @@ gpu::gpu() {
 	reset();
 }
 
+void gpu::push_frame() {
+	fprintf(stderr,"Frame ready!\n");
+	frame_ready = true;
+}
+
 int gpu::read_byte(int address) {
 	switch (address) {
 	case GPU_LCD:
 		return (bg ? 0x01 : 0x00) | (bg_map ? 0x08 : 0x00) | (bg_tile ? 0x10 : 0x00) | (lcd ? 0x80 : 0x00);
 		break;
 	case GPU_STAT:
-		fprintf(stderr,"GPU STAT register read\n");
-		return 0;
+		//fprintf(stderr,"GPU STAT register read\n");
+		return stat;
 		break;
 	case GPU_SCY:
 		return scy;
@@ -54,7 +59,8 @@ void gpu::write_byte(int address, int byte) {
 		lcd = (byte & 0x80) ? 1 : 0;
 		break;
 	case GPU_STAT:
-		fprintf(stderr,"GPU STAT register write\n");
+		stat = byte;
+		//fprintf(stderr,"GPU STAT register write\n");
 		break;
 	case GPU_SCY:
 		scy = byte;
@@ -82,6 +88,7 @@ void gpu::reset() {
 	pallete = 0;
 	bg = 0;
 	lcd = 0;
+	frame_ready = false;
 
 	// Clear screen
 	memset(screen,0x00,SCREEN_WIDTH*SCREEN_HEIGHT);
@@ -123,9 +130,6 @@ void gpu::update_tile(int address) {
 				+
 				(((vram[address+1] & sx) >> ((TILE_WIDTH - 1) - x)) << 1);
 	}
-}
-void gpu::push_frame() {
-	fprintf(stderr,"Frame ready!\n");
 }
 
 // TODO: Complete and test
