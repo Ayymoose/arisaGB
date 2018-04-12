@@ -45,14 +45,18 @@ public:
 	void step(int m_cycle);
 	void reset();
 	void update_tile(int address/*, int value*/);
-
 	int read_byte(int address);
 	void write_byte(int address, int byte);
 
+
 	void dump_screen();
+	void dump_vram();
+	void print_tile(int tile);
 
 private:
 	FRIEND_TEST(GPU, UpdateTile);
+	FRIEND_TEST(GPUVRAM,ROM);
+
 	friend class z80;
 
 	// Writes a single scanline to the frame buffer

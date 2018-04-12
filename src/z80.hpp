@@ -55,6 +55,9 @@ class z80 {
 
     private:
 		FRIEND_TEST(Z80, Instructions);
+		FRIEND_TEST(GPUVRAM,ROM);
+
+
 		friend class gb;
 
 		gpu gb_gpu;

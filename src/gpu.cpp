@@ -4,18 +4,36 @@
 
 #include "gpu.hpp"
 
-// FIXME: Array out of bounds access
 void gpu::dump_screen() {
 	std::cout << "{";
 	for (int y=0; y<SCREEN_HEIGHT; y++) {
 		for (int x=0; x<SCREEN_WIDTH; x++) {
-			std::cout << (int)screen[SCREEN_WIDTH * y + x] << ",";
+			printf("0x%02X, ",(int)screen[SCREEN_WIDTH * y + x]);
 		}
 		std::cout << std::endl;
 	}
-	std::cout << "}" << std::endl;
+	printf("}");
 }
 
+void gpu::dump_vram() {
+	printf("{");
+	for (int i=0; i<VRAM_SIZE; i++) {
+		printf("0x%02X, ",vram[i]);
+		if (i % 128 == 0) {
+			printf("\n");
+		}
+	}
+	printf("}");
+}
+
+void gpu::print_tile(int tile) {
+	for (int y=0; y<TILE_HEIGHT; y++) {
+		for (int x=0; x<TILE_HEIGHT; x++) {
+			printf("0x%02X, ",tileset[tile][y][x]);
+		}
+		printf("\n");
+	}
+}
 
 gpu::gpu() {
 	reset();
@@ -32,7 +50,6 @@ int gpu::read_byte(int address) {
 		return (bg ? 0x01 : 0x00) | (bg_map ? 0x08 : 0x00) | (bg_tile ? 0x10 : 0x00) | (lcd ? 0x80 : 0x00);
 		break;
 	case GPU_STAT:
-		//fprintf(stderr,"GPU STAT register read\n");
 		return stat;
 		break;
 	case GPU_SCY:
@@ -60,7 +77,6 @@ void gpu::write_byte(int address, int byte) {
 		break;
 	case GPU_STAT:
 		stat = byte;
-		//fprintf(stderr,"GPU STAT register write\n");
 		break;
 	case GPU_SCY:
 		scy = byte;
@@ -71,7 +87,6 @@ void gpu::write_byte(int address, int byte) {
 	case GPU_PALLETE:
 		//TODO: Implement pallete
 		fprintf(stderr,"Pallete not done!\n");
-		//throw "Pallete not done!";
 		break;
 	default: fprintf(stderr,"[GPU] GPU register write at 0x%04X\n",address);
 	}
@@ -106,38 +121,43 @@ void gpu::reset() {
 	}
 }
 
-// TODO: Test
+// Updates a single row in a tile in the tileset
 void gpu::update_tile(int address) {
 
-	// Get base address
-	//address &= 0x1FFE;
+	// If the address is odd
+	if (address & 0x001) {
+		address--;
+	}
 
 	// Find the tile index in the set
-	int tile = (address >> 4) & 0x01FF;
+	// Clamp value to TILE_MAX-1
+	int tile = (address >> 4) & 0x017F;
 
 	// Find the row to update
 	int y = (address >> 1) & (TILE_HEIGHT - 1);
 
 	// A single row of a tile is stored in 2 bytes
+	// 1 byte represents half a row
+	// 0x8000 [XX,XX,XX,XX] 0x8001 [XX,XX,XX,XX]
+	// 0x8002 [XX,XX,XX,XX] 0x8003 [XX,XX,XX,XX]
+	// 0x8004 [XX,XX,XX,XX] 0x8005 [XX,XX,XX,XX]
+	// ...
+	//
+
 	// Low bit of pixel data is in first byte
 	// High bit of pixel data is in second byte
-	// Loop over the row and calculate the pixel value
 
+	// Loop over the row and calculate the pixel value
+	// FIXME: Change to calculate value of entire row using bit manipulation
 	for (int x=0; x<TILE_WIDTH; x++) {
 		int sx = 1 << ((TILE_WIDTH - 1) - x);
-		tileset[tile][y][x] =
-				((vram[address] & sx) >> ((TILE_WIDTH - 1) - x))
-				+
-				(((vram[address+1] & sx) >> ((TILE_WIDTH - 1) - x)) << 1);
+		tileset[tile][y][x] = ((vram[address] & sx) >> ((TILE_WIDTH - 1) - x)) + (((vram[address+1] & sx) >> ((TILE_WIDTH - 1) - x)) << 1);
 	}
 }
 
 // TODO: Complete and test
-// Renders a single scan line
+// Renders a single scan line from the tile map
 void gpu::render_scanline() {
-
-	//fprintf(stderr,"Rendering scanline!\n");
-
 	int map;
 	// Select the tile map to draw from
 	if (bg == 0) {

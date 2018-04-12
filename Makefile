@@ -13,7 +13,7 @@ GINC = -Itest/googletest/include
 TST_OBJ = $(addprefix $(BIN)/, test_all.o z80.o rom.o gpu.o gb.o)
 TST_SRC = test
 
-all: arisaGB tests#  window#
+all: arisaGB tests window
 
 arisaGB: $(OBJ)
 	$(CXX) $(INC) $(CFLAGS) $(OBJ) -o $(BIN)/arisaGB
