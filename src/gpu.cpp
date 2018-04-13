@@ -124,14 +124,14 @@ void gpu::reset() {
 // Updates a single row in a tile in the tileset
 void gpu::update_tile(int address) {
 
-	// If the address is odd
+	// If the address is odd update the even address row
 	if (address & 0x001) {
 		address--;
 	}
 
 	// Find the tile index in the set
 	// Clamp value to TILE_MAX-1
-	int tile = (address >> 4) & 0x017F;
+	int tile = (address >> 4) & 0x01FF;
 
 	// Find the row to update
 	int y = (address >> 1) & (TILE_HEIGHT - 1);
@@ -166,6 +166,10 @@ void gpu::render_scanline() {
 		map = TILE_MAP_1;
 	}
 
+	// Rendering a scanline
+	// 1. Find the index of the tile to render inside the current screen
+	// 2. Tile map is at 0x9800 or 0x9C00 of VRAM in the memory map
+
 	// Tile index is calculated using
 	// SCX register
 	// SCY register
@@ -174,8 +178,10 @@ void gpu::render_scanline() {
 	// ANDing with 0xFF allows the y index to wrap
 	// Same with x index
 
-	int tile_x_offset = (scx >> 3);
-	int tile_index = ((((line + scy) & 0xFF) >> 3) << 5) + (tile_x_offset & 0x1F);
+	int tile_x_offset = (scx >> 3) & 0x1F;
+	int tile_y_offset = (((line + scy) & 0xFF) >> 3) << 5;
+
+	int tile_index = tile_y_offset + tile_x_offset;
 
 	// Grab a tile from the current map
 	int tile = vram[map + tile_index];
@@ -193,7 +199,9 @@ void gpu::render_scanline() {
 
 		// Get the 2-bit colour of the current "pixel" in the tile row
 		// [XX,XX,XX,XX,XX,XX,XX,XX]
-		unsigned char pixel = tileset[tile_index][tile_y][tile_x];
+		unsigned char pixel = tileset[tile][tile_y][tile_x];
+
+		// TODO: Run through pallete
 
 		// Draw pixel of current tile to screen
 		screen[SCREEN_WIDTH * line + x] = pixel;

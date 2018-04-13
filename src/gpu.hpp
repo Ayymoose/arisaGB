@@ -24,7 +24,7 @@
 
 #define TILE_WIDTH 8
 #define TILE_HEIGHT 8
-#define TILE_MAX 384
+#define TILE_MAX 512
 
 // GPU registers
 #define GPU_LCD 0xFF40
@@ -88,7 +88,7 @@ private:
 	 * 256 8x8 unique tiles in screen
 	 * Tile map 0 (-128 to 127) (signed)
 	 * Tile map 1 (0 to 255) (unsigned)
-	 * Each map holds maximum 32x32 (384) tiles
+	 * 255+128 = 384 unique tiles
 	 */
 };
 
