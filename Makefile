@@ -1,6 +1,6 @@
 CXX = g++
 CFLAGS = -std=c++11 -Wall -Wextra -Wshadow -g
-LDFLAGS := -L/usr/local/lib/ -lpthread -pthread
+LDFLAGS := -L/usr/local/lib/ -lpthread -pthread -lGL -lGLU -lglut
 INC = -Isrc -Itest
 
 BIN = bin
@@ -16,7 +16,7 @@ TST_SRC = test
 all: arisaGB tests window
 
 arisaGB: $(OBJ)
-	$(CXX) $(INC) $(CFLAGS) $(OBJ) -o $(BIN)/arisaGB
+	$(CXX) $(INC) $(CFLAGS) $(OBJ) -o $(BIN)/arisaGB $(LDFLAGS)
 
 $(BIN)/%.o: $(SRC)/%.cpp    
 	$(CXX) $(INC) $(GINC) $(CFLAGS) $< -c -o $@

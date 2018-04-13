@@ -4,6 +4,26 @@
 
 #include "gpu.hpp"
 
+void gpu::dump_tilemaps() {
+
+	printf("Tile map 0\n{");
+	for (int i=0; i<1024; i++) {
+		printf("0x%02X, ",vram[TILE_MAP_0 + i]);
+		if (i % 32 == 0) {
+			printf("\n");
+		}
+	}
+	printf("}\n");
+	printf("Tile map 1\n{");
+	for (int i=0; i<1024; i++) {
+		printf("0x%02X, ",vram[TILE_MAP_1 + i]);
+		if (i % 32 == 0) {
+			printf("\n");
+		}
+	}
+	printf("}\n");
+}
+
 void gpu::dump_screen() {
 	std::cout << "{";
 	for (int y=0; y<SCREEN_HEIGHT; y++) {
@@ -37,11 +57,6 @@ void gpu::print_tile(int tile) {
 
 gpu::gpu() {
 	reset();
-}
-
-void gpu::push_frame() {
-	fprintf(stderr,"Frame ready!\n");
-	frame_ready = true;
 }
 
 int gpu::read_byte(int address) {
@@ -104,6 +119,7 @@ void gpu::reset() {
 	bg = 0;
 	lcd = 0;
 	frame_ready = false;
+	stat = 0;
 
 	// Clear screen
 	memset(screen,0x00,SCREEN_WIDTH*SCREEN_HEIGHT);
@@ -155,7 +171,7 @@ void gpu::update_tile(int address) {
 	}
 }
 
-// TODO: Complete and test
+// TODO: Pallete missing
 // Renders a single scan line from the tile map
 void gpu::render_scanline() {
 	int map;
@@ -180,7 +196,6 @@ void gpu::render_scanline() {
 
 	int tile_x_offset = (scx >> 3) & 0x1F;
 	int tile_y_offset = (((line + scy) & 0xFF) >> 3) << 5;
-
 	int tile_index = tile_y_offset + tile_x_offset;
 
 	// Grab a tile from the current map
@@ -235,7 +250,7 @@ void gpu::step(int m_cycle) {
 				line++;
 				if (line == SCREEN_HEIGHT) {
 					mode = VBLANK;
-					push_frame();
+					frame_ready = true;
 				} else {
 					mode = SCANLINE_OAM;
 				}

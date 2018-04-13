@@ -36,8 +36,6 @@
 #define GPU_DMA 0xFF46 // TODO: Implement
 #define GPU_PALLETE 0xFF47
 
-
-
 class gpu {
 
 public:
@@ -51,13 +49,16 @@ public:
 
 	void dump_screen();
 	void dump_vram();
+	void dump_tilemaps();
 	void print_tile(int tile);
 
 private:
 	FRIEND_TEST(GPU, UpdateTile);
-	FRIEND_TEST(GPUVRAM,ROM);
+	FRIEND_TEST(GPUMemory,ROM);
+	//FRIEND_TEST(GPU,MemoryBadWrite);
 
 	friend class z80;
+	friend class gb;
 
 	// Writes a single scanline to the frame buffer
 	void render_scanline();

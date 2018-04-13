@@ -3,6 +3,7 @@
 
 gb::gb() {
 	gb_cpu.reset();
+	context = nullptr;
 }
 
 // TODO: Complete
@@ -15,11 +16,12 @@ void gb::start() {
 	do {
 		gb_cpu.execute();
 	} while (gb_cpu.clock_m < clock_max);
-	//gb_cpu.gb_gpu.print_tile(0);
-	gb_cpu.gb_gpu.dump_screen();
 
+
+	gb_cpu.gb_gpu.dump_tilemaps();
+	//gb_cpu.gb_gpu.dump_screen();
 }
 
-void gb::stop() {
-
+void gb::set_context(unsigned char **screen) {
+	*screen = gb_cpu.gb_gpu.screen;
 }

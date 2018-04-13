@@ -44,6 +44,12 @@ void z80::write_byte(int address, int byte) {
 		break;
 	case VRAM:
 	case 0x9000:
+		// FIXME: Bug, does not load all the tile values for some reason
+		// Skips 0x9810, 0x9830 and stops at 0x9840
+		if (address >= 0x9800 && address <= 0x9BFF) {
+			printf("AF=0x%02X%02X BC=0x%02X%02X DE=0x%02X%02X HL=0x%02X%02X SP=0x%04X PC=0x%04X\n",reg8[A],reg8[F],reg8[B],reg8[C],reg8[D],reg8[E],reg8[H],reg8[L],sp,pc);
+			//printf("SCX=0x%02X SCY=0x%02X STAT=0x%02X\n", gb_gpu.scx,gb_gpu.scy,gb_gpu.stat);
+		}
 		gb_gpu.vram[address & 0x1FFF] = byte;
 		gb_gpu.update_tile(address & 0x1FFF);
 		break;
@@ -100,7 +106,6 @@ int z80::read_byte(int address) {
 	case 0x5000:
 	case 0x6000:
 	case 0x7000:
-		//fprintf(stderr,"Read from cartridge ROM 1 0x%04X\n",address);
 		return memory[address];
 		break;
 	case VRAM:
@@ -161,6 +166,8 @@ void z80::load_bank(const rom &r) {
 void z80::execute() {
 	unsigned char instruction = read_byte(pc++);
 	(this->*opcodes[static_cast<int>(instruction)])();
+	printf("AF=0x%02X%02X BC=0x%02X%02X DE=0x%02X%02X HL=0x%02X%02X SP=0x%04X PC=0x%04X\n",reg8[A],reg8[F],reg8[B],reg8[C],reg8[D],reg8[E],reg8[H],reg8[L],sp,pc);
+	//printf("SCX=0x%02X SCY=0x%02X STAT=0x%02X\n", gb_gpu.scx,gb_gpu.scy,gb_gpu.stat);
 	clock_m += m_cycle;
 	gb_gpu.step(m_cycle);
 }
@@ -1042,7 +1049,7 @@ void z80::f_0x20() {
     if (i < 0) {
     	printf("[0x%04X] JR NZ,%d\n",pc-1,i);
     } else {
-    	printf("[0x%04X] JR NZ,0x%02X\n",pc-1,i);
+    	printf("[0x%04X] JR NZ,0x%04X\n",pc-1,i);
     }
 
     pc++;
@@ -3168,8 +3175,8 @@ void z80::f_0xE6() {
     pc++;
     reg8[A] &= 0xFF;
     reg8[F] = reg8[A] ? 0 : ZERO_FLAG;
+    reg8[F] |= HALF_CARRY_FLAG;
     m_cycle = 2;
-
 }
 
 // RST 20H

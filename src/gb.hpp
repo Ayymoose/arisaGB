@@ -9,10 +9,12 @@ public:
 	gb();
 	void load_rom(const rom& r);
 	void start();
-	void stop();
+	void set_context(unsigned char **screen);
+	//void stop();
 	void reset();
 private:
 	z80 gb_cpu;
+	unsigned char *context;
 };
 
 #endif

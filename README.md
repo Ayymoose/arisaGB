@@ -1,4 +1,3 @@
 # arisaGB
-Small gameboy emulator written in C++
-
-A small cross-platform gameboy emulator available in different languages.
+A small gameboy emulator written in C++
+Currently broken and not working
