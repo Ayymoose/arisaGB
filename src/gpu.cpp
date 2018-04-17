@@ -8,7 +8,7 @@ void gpu::dump_tilemaps() {
 
 	printf("Tile map 0\n{");
 	for (int i=0; i<1024; i++) {
-		printf("0x%02X, ",vram[TILE_MAP_0 + i]);
+		printf("0x%02X, ",vram[0x1800 + i]);
 		if (i % 32 == 0) {
 			printf("\n");
 		}
@@ -16,7 +16,7 @@ void gpu::dump_tilemaps() {
 	printf("}\n");
 	printf("Tile map 1\n{");
 	for (int i=0; i<1024; i++) {
-		printf("0x%02X, ",vram[TILE_MAP_1 + i]);
+		printf("0x%02X, ",vram[0x1C00 + i]);
 		if (i % 32 == 0) {
 			printf("\n");
 		}
@@ -39,7 +39,7 @@ void gpu::dump_vram() {
 	printf("{");
 	for (int i=0; i<VRAM_SIZE; i++) {
 		printf("0x%02X, ",vram[i]);
-		if (i % 128 == 0) {
+		if (i % 32 == 0) {
 			printf("\n");
 		}
 	}
