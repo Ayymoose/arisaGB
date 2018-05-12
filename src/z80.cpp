@@ -71,7 +71,7 @@ void z80::write_byte(int address, int byte) {
 			default: fprintf(stderr,"[Z80] GPU register write at 0x%04X\n",address);
 			}
 		}
-
+		fprintf(stderr,"[Z80] GPU memory write at 0x%04X\n",address);
 		break;
 	default:
 			fprintf(stderr,"Memory write at 0x%04X\n",address);
@@ -131,7 +131,9 @@ int z80::read_byte(int address) {
 		fprintf(stderr,"Return 0 on 0x%04X\n",address);
 		return 0;
 		break;
-	default: return memory[address];
+	default:
+		fprintf(stderr,"[WARNING] Read access at 0x%04X\n",address);
+		return memory[address];
 	}
 }
 
@@ -155,7 +157,7 @@ int z80::read_word(int address) {
 
 // Loads a memory bank of 16K into memory
 void z80::load_bank(const rom &r) {
-	memcpy(memory,r.rom_data,BANK_SIZE*2);
+	memcpy(memory,r.rom_data.get(),BANK_SIZE*2);
 }
 
 void z80::execute() {

@@ -9,8 +9,6 @@
 #include "gpu.hpp"
 #include "z80.hpp"
 
-
-
 	TEST(RomTest,Files) {
 		rom r;
 

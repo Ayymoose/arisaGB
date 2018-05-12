@@ -30,6 +30,21 @@
 // 70224 / 4 = 17556
 #define FRAME_CYCLES 17556
 
+/*enum class CPU {
+	A = 0x00,
+	B = 0x01,
+	C = 0x02,
+	D = 0x03,
+	E = 0x04,
+	H = 0x05,
+	L = 0x06,
+	F = 0x07,
+	REGISTERS = 0x08,
+	OPCODES = 256,
+	CB_PREFIX = 256,
+	ENTRY_POINT = 0x100
+};*/
+
 class z80 {
 
     public:

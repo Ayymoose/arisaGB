@@ -81,6 +81,9 @@ private:
 	int lcd;		// LCD register
 	int stat;		// STAT register
 
+
+	int bg_pallete[4];
+
 	unsigned char tileset[TILE_MAX][TILE_WIDTH][TILE_HEIGHT]; // Internal tileset
 	int vram[VRAM_SIZE];									  // 8KB of VRAM which holds signed and unsigned bytes
 	unsigned char screen[SCREEN_WIDTH*SCREEN_HEIGHT];

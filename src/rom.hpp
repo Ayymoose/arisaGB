@@ -1,5 +1,6 @@
 #include <string>
 #include <iostream>
+#include <memory>
 
 #ifndef ROM_H
 #define ROM_H
@@ -27,8 +28,6 @@ class rom {
 		void load_rom(std::string file_name);
 
 		friend class z80;
-
-		// Debug function
 		// Reference to magic numbers 
 		// http://www.zophar.net/fileuploads/2/10597teazh/gbrom.txt
 		friend std::ostream& operator<<(std::ostream &os, const rom &r) {
@@ -238,8 +237,6 @@ class rom {
 			}
 
 			os << "Cartridge Type: " << cartridge_type << "\n";
-
-			
 
 			switch (static_cast<int>(r.rom_size)) {
 			  case 0x00:
@@ -602,7 +599,7 @@ class rom {
 		}
 
 	private:
-		unsigned char *rom_data;
+		std::unique_ptr<unsigned char[]> rom_data;
 		std::string title; 				/* Title of the game in upper case ASCII */
 		unsigned char license_high;    /* Licensee (High nibble) */
 		unsigned char license_low;     /* Licensee (Low nibble) */
@@ -612,6 +609,14 @@ class rom {
 		unsigned char ram_size;        /* RAM Size */
 		unsigned char dest_code;       /* Destination code */
 		unsigned char licensee_code;   /* Licensee code (old) */
+
+		// Check for Nintendo LOGO in ROM file
+		const int nintendo_logo[NINTENDO_LOGO_LEN] =
+		{
+			0xCE,0xED,0x66,0x66,0xCC,0x0D,0x00,0x0B,0x03,0x73,0x00,0x83,0x00,0x0C,0x00,0x0D,
+			0x00,0x08,0x11,0x1F,0x88,0x89,0x00,0x0E,0xDC,0xCC,0x6E,0xE6,0xDD,0xDD,0xD9,0x99,
+			0xBB,0xBB,0x67,0x63,0x6E,0x0E,0xEC,0xCC,0xDD,0xDC,0x99,0x9F,0xBB,0xB9,0x33,0x3E
+		};
 };
 
 

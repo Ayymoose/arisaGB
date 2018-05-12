@@ -101,6 +101,25 @@ void gpu::write_byte(int address, int byte) {
 		break;
 	case GPU_PALLETE:
 		//TODO: Implement pallete
+
+
+        for (int i = 0; i < 4; i++) {
+            switch ((byte >> (i * 2)) & 3) {
+                case 0:
+                	bg_pallete[i] = 255;
+                    break;
+                case 1:
+                	bg_pallete[i] = 192;
+                    break;
+                case 2:
+                	bg_pallete[i] = 96;
+                    break;
+                case 3:
+                	bg_pallete[i] = 0;
+                    break;
+            }
+        }
+
 		fprintf(stderr,"Pallete not done!\n");
 		break;
 	default: fprintf(stderr,"[GPU] GPU register write at 0x%04X\n",address);
@@ -120,6 +139,11 @@ void gpu::reset() {
 	lcd = 0;
 	frame_ready = false;
 	stat = 0;
+
+	bg_pallete[0] = 255;
+	bg_pallete[1] = 255;
+	bg_pallete[2] = 255;
+	bg_pallete[3] = 255;
 
 	// Clear screen
 	memset(screen,0x00,SCREEN_WIDTH*SCREEN_HEIGHT);
@@ -219,7 +243,7 @@ void gpu::render_scanline() {
 		// TODO: Run through pallete
 
 		// Draw pixel of current tile to screen
-		screen[SCREEN_WIDTH * line + x] = pixel;
+		screen[SCREEN_WIDTH * line + x] = bg_pallete[pixel];
 
 		// Draw next pixel until a complete tile row is drawn
 		tile_x++;

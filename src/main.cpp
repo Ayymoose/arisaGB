@@ -49,17 +49,17 @@ void update_texture() {
     for(int y = 0; y < SCREEN_HEIGHT; ++y) {
         for(int x = 0; x < SCREEN_WIDTH; ++x) {
         	int colour_data = data[SCREEN_WIDTH * y + x];
-        	int colour;
-        	switch (colour_data) {
+        	//int colour;
+        	/*switch (colour_data) {
 				case 0x03: colour = 0; break;
 				case 0x02: colour = 96; break;
 				case 0x01: colour = 192; break;
 				case 0x00: colour = 255; break;
         	default: colour = 0;
-        	}
-			screen[y][x][RED] = colour;
-			screen[y][x][GREEN] = colour;
-			screen[y][x][BLUE] = colour;
+        	}*/
+			screen[y][x][RED] = colour_data;
+			screen[y][x][GREEN] = colour_data;
+			screen[y][x][BLUE] = colour_data;
         }
     }
     // Update Texture
@@ -109,7 +109,6 @@ int main(int argc, char **argv)
 	rom r;
 	gb gameboy;
 	try {
-
 		r.load_rom("/home/ayman/Desktop/arisaGB/rom/opus5.gb");
 		gameboy.load_rom(r);
 
@@ -118,9 +117,10 @@ int main(int argc, char **argv)
 	}
 
 	gameboy.set_context(&data);
+
+
+	// Use cross platform SFML instead
 	gameboy.start();
-
-
 
     glutDisplayFunc(display);
     glutIdleFunc(display);
@@ -128,6 +128,7 @@ int main(int argc, char **argv)
 
     setup_texture();
     glutMainLoop();
+
 
     return 0;
 }
