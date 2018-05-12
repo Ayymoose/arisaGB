@@ -12,8 +12,8 @@ class sdl_screen {
 		~sdl_screen();
 		bool init();
 		void render(unsigned char* screen_context);
-		void events();
-		bool is_open() const;
+		void event_handler();
+		bool is_running() const;
 		void set_title(std::string title);
 	private:
 		int width;

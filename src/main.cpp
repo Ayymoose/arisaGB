@@ -8,7 +8,6 @@ int main() {
 		./arisaGB rom.gb
 	*/
 
-
 	rom gb_rom;
 	gb gameboy;
 	try {

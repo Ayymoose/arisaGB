@@ -56,7 +56,7 @@ bool sdl_screen::init() {
     return true;
 }
 
-void sdl_screen::events() {
+void sdl_screen::event_handler() {
 	//While there's events to handle
     while (SDL_PollEvent(&event)) {
 
@@ -68,7 +68,7 @@ void sdl_screen::events() {
     }
 }
 
-bool sdl_screen::is_open() const {
+bool sdl_screen::is_running() const {
 	return !quit;
 }
 
@@ -79,7 +79,7 @@ void sdl_screen::render(unsigned char* screen_context) {
 
 	// Drawing code goes here
 	SDL_UpdateTexture(texture, nullptr, screen_context,16); 
-
+	SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 	// Flip buffers
 	SDL_RenderPresent(renderer);
 

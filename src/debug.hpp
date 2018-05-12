@@ -8,6 +8,7 @@
 	#define DPRINTF(M, ...) (fprintf(stdout,"[DEBUG] " M ,## __VA_ARGS__))
 #else
 	#define LOG(M, ...)
+	#define DPRINTF(M, ...)
 #endif
 
 #endif

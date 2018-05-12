@@ -20,8 +20,8 @@ void gb::start() {
 	int clock_max = gb_cpu.clock_m + FRAME_CYCLES;
 	unsigned char *screen_context = gb_cpu.get_context();
 
-	while (gb_screen.is_open()) {
-		gb_screen.events();
+	while (gb_screen.is_running()) {
+		gb_screen.event_handler();
 		if (gb_cpu.clock_m < clock_max) {			
 			gb_cpu.execute();
 			if (gb_cpu.frame_ready()) {
