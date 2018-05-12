@@ -1,3 +1,6 @@
 *.o
+*.js
+*.xml
 .settings
 .cproject
+.project

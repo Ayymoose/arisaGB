@@ -3,76 +3,38 @@
 
 #include "gtest/gtest_prod.h"
 
-#define VRAM_SIZE 8192
-#define VRAM 0x8000
-#define SCREEN_WIDTH 160
-#define SCREEN_HEIGHT 144
+enum GPU {
+	VRAM_SIZE = 8192,
+	SCREEN_WIDTH = 160,
+	SCREEN_HEIGHT = 144,
 
-// GPU modes
-#define HBLANK 0
-#define VBLANK 1
-#define SCANLINE_OAM 2
-#define SCANLINE_VRAM 3
-#define HBLANK_CYCLES 51
-#define SCANLINE_OAM_CYCLES 20
-#define SCANLINE_VRAM_CYCLES 43
+	// Registers
+	GPU_LCD = 0xFF40,
+	GPU_STAT = 0xFF41,		// TODO: Implement
+	GPU_SCY = 0xFF42,
+	GPU_SCX = 0xFF43,
+	GPU_LINE = 0xFF44,
+	GPU_LYC = 0xFF45, 		// TODO: Implement
+	GPU_DMA = 0xFF46, 		// TODO: Implement
+	GPU_PALLETE = 0xFF47,
 
-// Tiles
-#define TILE_MAP_0 0x1800
-#define TILE_MAP_1 0x1C00
-#define TILE_WIDTH 8
-#define TILE_HEIGHT 8
-#define TILE_MAX 512
+	// Modes
+	HBLANK = 0,
+	VBLANK = 1,
+	SCANLINE_OAM = 2,
+	SCANLINE_VRAM = 3,
+	HBLANK_CYCLES = 51,
+	SCANLINE_OAM_CYCLES = 20,
+	SCANLINE_VRAM_CYCLES = 43,
 
-// GPU registers
-#define GPU_LCD 0xFF40
-#define GPU_STAT 0xFF41	// TODO: Implement
-#define GPU_SCY 0xFF42
-#define GPU_SCX 0xFF43
-#define GPU_LINE 0xFF44
-#define GPU_LYC 0xFF45 // TODO: Implement
-#define GPU_DMA 0xFF46 // TODO: Implement
-#define GPU_PALLETE 0xFF47
+	// Tiles
+	TILE_MAP_0 = 0x1800,
+	TILE_MAP_1 = 0x1C00,
+	TILE_WIDTH = 8,
+	TILE_HEIGHT = 8,
+	TILE_MAX = 512
+};
 
-/*namespace GB_GPU {
-
-	enum class MEMORY {
-		VRAM_SIZE = 8192,
-		VRAM = 0x8000,
-		SCREEN_WIDTH = 160,
-		SCREEN_HEIGHT = 144
-	};
-
-	enum class REGISTERS {
-		GPU_LCD = 0xFF40,
-		GPU_STAT = 0xFF41,	// TODO: Implement
-		GPU_SCY = 0xFF42,
-		GPU_SCX = 0xFF43,
-		GPU_LINE = 0xFF44,
-		GPU_LYC = 0xFF45, // TODO: Implement
-		GPU_DMA = 0xFF46, // TODO: Implement
-		GPU_PALLETE = 0xFF47
-	};
-
-	enum class MODES {
-		HBLANK = 0,
-		VBLANK = 1,
-		SCANLINE_OAM = 2,
-		SCANLINE_VRAM = 3,
-		HBLANK_CYCLES = 51,
-		SCANLINE_OAM_CYCLES = 20,
-		SCANLINE_VRAM_CYCLES = 43
-	};
-
-	enum class TILES {
-		TILE_MAP_0 = 0x1800,
-		TILE_MAP_1 = 0x1C00,
-		TILE_WIDTH = 8,
-		TILE_HEIGHT = 8,
-		TILE_MAX = 512
-	};
-
-}*/
 
 class gpu {
 
@@ -122,9 +84,9 @@ class gpu {
 
 		int bg_pallete[4];
 
-		unsigned char tileset[TILE_MAX][TILE_WIDTH][TILE_HEIGHT]; // Internal tileset
-		int vram[VRAM_SIZE];									  // 8KB of VRAM which holds signed and unsigned bytes
-		unsigned char screen[SCREEN_WIDTH*SCREEN_HEIGHT];
+		unsigned char tileset[GPU::TILE_MAX][GPU::TILE_WIDTH][GPU::TILE_HEIGHT]; // Internal tileset
+		int vram[GPU::VRAM_SIZE];									  // 8KB of VRAM which holds signed and unsigned bytes
+		unsigned char screen[GPU::SCREEN_WIDTH*GPU::SCREEN_HEIGHT];
 
 		/*
 		 * 256 8x8 unique tiles in screen

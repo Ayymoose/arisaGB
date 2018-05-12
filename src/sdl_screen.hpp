@@ -9,18 +9,17 @@ class sdl_screen {
 
 	public:
 		sdl_screen();
-		sdl_screen(int width, int height, std::string window_title, int fps_limit);
 		~sdl_screen();
 		bool init();
-		void render();
-		void events() const;
+		void render(unsigned char* screen_context);
+		void events();
 		bool is_open() const;
+		void set_title(std::string title);
 	private:
 		int width;
 		int height;
 		std::string window_title;
 		int fps_limit;		
-
 		int current_frame;
 		SDL_Window *window;
 		SDL_Renderer *renderer;

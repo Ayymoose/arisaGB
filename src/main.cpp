@@ -1,8 +1,14 @@
 #include "rom.hpp"
 #include "gb.hpp"
 
-int main()
-{
+int main() {
+
+	/*
+		Run as 
+		./arisaGB rom.gb
+	*/
+
+
 	rom gb_rom;
 	gb gameboy;
 	try {

@@ -1,5 +1,5 @@
 CXX = g++
-CFLAGS = -std=c++11 -Wall -Wextra -Wshadow -g
+CFLAGS = -std=c++11 -Wall -Wextra -g
 LDFLAGS := -L/usr/local/lib/ -lpthread -pthread -lSDL2
 INC = -Isrc -Itest
 

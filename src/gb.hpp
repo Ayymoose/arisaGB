@@ -2,7 +2,7 @@
 #define GB_H
 
 #include "z80.hpp"
-#include "rom.hpp"
+//#include "rom.hpp"
 #include "sdl_screen.hpp"
 
 class gb {

@@ -14,24 +14,15 @@ sdl_screen::sdl_screen() {
 	quit = false;
 }
 
-sdl_screen::sdl_screen(int width, int height, std::string window_title, int fps_limit) :
-	width(width),
-	height(height),
-	window_title(window_title),
-	fps_limit(fps_limit) 
-{
-	window = nullptr;
-	renderer = nullptr;
-	texture = nullptr;
-	current_frame = 0;
-	quit = false;
-}
-
 sdl_screen::~sdl_screen() {
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
+}
+
+void sdl_screen::set_title(std::string title) {
+	SDL_SetWindowTitle(window,title.c_str());
 }
 
 bool sdl_screen::init() {
@@ -65,7 +56,7 @@ bool sdl_screen::init() {
     return true;
 }
 
-void sdl_screen::events() const {
+void sdl_screen::events() {
 	//While there's events to handle
     while (SDL_PollEvent(&event)) {
 

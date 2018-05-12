@@ -26,9 +26,9 @@ void gpu::dump_tilemaps() {
 
 void gpu::dump_screen() {
 	std::cout << "{";
-	for (int y=0; y<SCREEN_HEIGHT; y++) {
-		for (int x=0; x<SCREEN_WIDTH; x++) {
-			printf("0x%02X, ",(int)screen[SCREEN_WIDTH * y + x]);
+	for (int y=0; y<GPU::SCREEN_HEIGHT; y++) {
+		for (int x=0; x<GPU::SCREEN_WIDTH; x++) {
+			printf("0x%02X, ",(int)screen[GPU::SCREEN_WIDTH * y + x]);
 		}
 		std::cout << std::endl;
 	}
@@ -37,7 +37,7 @@ void gpu::dump_screen() {
 
 void gpu::dump_vram() {
 	printf("{");
-	for (int i=0; i<VRAM_SIZE; i++) {
+	for (int i=0; i<GPU::VRAM_SIZE; i++) {
 		printf("0x%02X, ",vram[i]);
 		if (i % 32 == 0) {
 			printf("\n");
@@ -47,8 +47,8 @@ void gpu::dump_vram() {
 }
 
 void gpu::print_tile(int tile) {
-	for (int y=0; y<TILE_HEIGHT; y++) {
-		for (int x=0; x<TILE_HEIGHT; x++) {
+	for (int y=0; y<GPU::TILE_HEIGHT; y++) {
+		for (int x=0; x<GPU::TILE_HEIGHT; x++) {
 			printf("0x%02X, ",tileset[tile][y][x]);
 		}
 		printf("\n");
@@ -61,19 +61,19 @@ gpu::gpu() {
 
 int gpu::read_byte(int address) {
 	switch (address) {
-	case GPU_LCD:
+	case GPU::GPU_LCD:
 		return (bg ? 0x01 : 0x00) | (bg_map ? 0x08 : 0x00) | (bg_tile ? 0x10 : 0x00) | (lcd ? 0x80 : 0x00);
 		break;
-	case GPU_STAT:
+	case GPU::GPU_STAT:
 		return stat;
 		break;
-	case GPU_SCY:
+	case GPU::GPU_SCY:
 		return scy;
 		break;
-	case GPU_SCX:
+	case GPU::GPU_SCX:
 		return scx;
 		break;
-	case GPU_LINE:
+	case GPU::GPU_LINE:
 		return line;
 		break;
 	default:
@@ -84,22 +84,22 @@ int gpu::read_byte(int address) {
 
 void gpu::write_byte(int address, int byte) {
 	switch (address) {
-	case GPU_LCD:
+	case GPU::GPU_LCD:
 		bg = (byte & 0x01) ? 1 : 0;
 		bg_map = (byte & 0x08) ? 1 : 0;
 		bg_tile = (byte & 0x10) ? 1 : 0;
 		lcd = (byte & 0x80) ? 1 : 0;
 		break;
-	case GPU_STAT:
+	case GPU::GPU_STAT:
 		stat = byte;
 		break;
-	case GPU_SCY:
+	case GPU::GPU_SCY:
 		scy = byte;
 		break;
-	case GPU_SCX:
+	case GPU::GPU_SCX:
 		scx = byte;
 		break;
-	case GPU_PALLETE:
+	case GPU::GPU_PALLETE:
 		//TODO: Implement pallete
 
 
@@ -127,7 +127,7 @@ void gpu::write_byte(int address, int byte) {
 }
 
 void gpu::reset() {
-	mode = SCANLINE_OAM;
+	mode = GPU::SCANLINE_OAM;
 	clock = 0;
 	scx = 0;
 	scy = 0;
@@ -146,15 +146,15 @@ void gpu::reset() {
 	bg_pallete[3] = 255;
 
 	// Clear screen
-	memset(screen,0x00,SCREEN_WIDTH*SCREEN_HEIGHT);
+	memset(screen,0x00,GPU::SCREEN_WIDTH*GPU::SCREEN_HEIGHT);
 
-	// Clear VRAM
-	memset(vram,0x00,sizeof(int) * VRAM_SIZE);
+	// Clear GPU::VRAM
+	memset(vram,0x00,sizeof(int) * GPU::VRAM_SIZE);
 
 	// Clear tile set
-	for (int tile=0; tile<TILE_MAX; tile++) {
-		for (int y=0; y<TILE_HEIGHT; y++) {
-			for (int x=0; x<TILE_WIDTH; x++) {
+	for (int tile=0; tile<GPU::TILE_MAX; tile++) {
+		for (int y=0; y<GPU::TILE_HEIGHT; y++) {
+			for (int x=0; x<GPU::TILE_WIDTH; x++) {
 				tileset[tile][y][x] = 0x00;
 			}
 		}
@@ -170,11 +170,11 @@ void gpu::update_tile(int address) {
 	}
 
 	// Find the tile index in the set
-	// Clamp value to TILE_MAX-1
+	// Clamp value to GPU::TILE_MAX-1
 	int tile = (address >> 4) & 0x01FF;
 
 	// Find the row to update
-	int y = (address >> 1) & (TILE_HEIGHT - 1);
+	int y = (address >> 1) & (GPU::TILE_HEIGHT - 1);
 
 	// A single row of a tile is stored in 2 bytes
 	// 1 byte represents half a row
@@ -189,9 +189,9 @@ void gpu::update_tile(int address) {
 
 	// Loop over the row and calculate the pixel value
 	// FIXME: Change to calculate value of entire row using bit manipulation
-	for (int x=0; x<TILE_WIDTH; x++) {
-		int sx = 1 << ((TILE_WIDTH - 1) - x);
-		tileset[tile][y][x] = ((vram[address] & sx) >> ((TILE_WIDTH - 1) - x)) + (((vram[address+1] & sx) >> ((TILE_WIDTH - 1) - x)) << 1);
+	for (int x=0; x<GPU::TILE_WIDTH; x++) {
+		int sx = 1 << ((GPU::TILE_WIDTH - 1) - x);
+		tileset[tile][y][x] = ((vram[address] & sx) >> ((GPU::TILE_WIDTH - 1) - x)) + (((vram[address+1] & sx) >> ((GPU::TILE_WIDTH - 1) - x)) << 1);
 	}
 }
 
@@ -201,14 +201,14 @@ void gpu::render_scanline() {
 	int map;
 	// Select the tile map to draw from
 	if (bg == 0) {
-		map = TILE_MAP_0;
+		map = GPU::TILE_MAP_0;
 	} else {
-		map = TILE_MAP_1;
+		map = GPU::TILE_MAP_1;
 	}
 
 	// Rendering a scanline
 	// 1. Find the index of the tile to render inside the current screen
-	// 2. Tile map is at 0x9800 or 0x9C00 of VRAM in the memory map
+	// 2. Tile map is at 0x9800 or 0x9C00 of GPU::VRAM in the memory map
 
 	// Tile index is calculated using
 	// SCX register
@@ -231,10 +231,10 @@ void gpu::render_scanline() {
 	}
 
 	// Get the row and column of the tile to draw from
-	int tile_y = (line + scy) & (TILE_HEIGHT - 1);
-	int tile_x = scx & (TILE_WIDTH - 1);
+	int tile_y = (line + scy) & (GPU::TILE_HEIGHT - 1);
+	int tile_x = scx & (GPU::TILE_WIDTH - 1);
 
-	for (int x=0; x<SCREEN_WIDTH; x++) {
+	for (int x=0; x<GPU::SCREEN_WIDTH; x++) {
 
 		// Get the 2-bit colour of the current "pixel" in the tile row
 		// [XX,XX,XX,XX,XX,XX,XX,XX]
@@ -243,11 +243,11 @@ void gpu::render_scanline() {
 		// TODO: Run through pallete
 
 		// Draw pixel of current tile to screen
-		screen[SCREEN_WIDTH * line + x] = bg_pallete[pixel];
+		screen[GPU::SCREEN_WIDTH * line + x] = bg_pallete[pixel];
 
 		// Draw next pixel until a complete tile row is drawn
 		tile_x++;
-		if (tile_x == TILE_WIDTH) {
+		if (tile_x == GPU::TILE_WIDTH) {
 			tile_x  = 0;
 			tile_x_offset = (tile_x_offset + 1) & 0x1F;
 
@@ -268,39 +268,39 @@ void gpu::render_scanline() {
 void gpu::step(int m_cycle) {
 	clock += m_cycle;
 	switch (mode) {
-	case (HBLANK):
-			if (clock >= HBLANK_CYCLES) {
+	case (GPU::HBLANK):
+			if (clock >= GPU::HBLANK_CYCLES) {
 				clock = 0;
 				line++;
-				if (line == SCREEN_HEIGHT) {
-					mode = VBLANK;
+				if (line == GPU::SCREEN_HEIGHT) {
+					mode = GPU::VBLANK;
 					// Render frame
 					frame_ready = true;
 				} else {
-					mode = SCANLINE_OAM;
+					mode = GPU::SCANLINE_OAM;
 				}
 			}
 	break;
-	case (VBLANK):
+	case (GPU::VBLANK):
 		if (clock >= 114) {
 			clock = 0;
 			line++;
 			if (line > 153) {
-				mode = SCANLINE_OAM;
+				mode = GPU::SCANLINE_OAM;
 				line = 0;
 			}
 		}
 	break;
-	case (SCANLINE_OAM):
-		if (clock >= SCANLINE_OAM_CYCLES) {
+	case (GPU::SCANLINE_OAM):
+		if (clock >= GPU::SCANLINE_OAM_CYCLES) {
 			clock = 0;
-			mode = SCANLINE_VRAM;
+			mode = GPU::SCANLINE_VRAM;
 		}
 	break;
-	case (SCANLINE_VRAM):
-			if (clock >= SCANLINE_VRAM_CYCLES) {
+	case (GPU::SCANLINE_VRAM):
+			if (clock >= GPU::SCANLINE_VRAM_CYCLES) {
 				clock = 0;
-				mode = HBLANK;
+				mode = GPU::HBLANK;
 				render_scanline();
 			}
 	break;
