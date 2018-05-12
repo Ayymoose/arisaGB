@@ -1,0 +1,8 @@
+language:
+  - cpp
+compiler:
+  - gcc
+script:
+  # Run make and test
+  make
+  # Run your build commands next
