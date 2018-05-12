@@ -172,6 +172,18 @@ z80::~z80() {
 
 }
 
+bool z80::frame_ready() const {
+	return gb_gpu.frame_ready;
+}
+
+void z80::reset_frame() {
+	gb_gpu.frame_ready = false;
+}
+
+unsigned char* get_context() const {
+	return gb_gpu.screen;
+}
+
 z80::z80() {
 	in_bios = true;
 	memset(memory,0x00,MEMORY_MAX);

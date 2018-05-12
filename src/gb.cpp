@@ -6,23 +6,28 @@
 
 gb::gb() {
 	gb_cpu.reset();
-	context = nullptr;
+	gb_screen.init();
 }
 
 // TODO: Complete
 // Loads two banks from the ROM into memory
-void gb::load_rom(const rom& r) {
-	gb_cpu.load_bank(r);
+void gb::load_rom(const rom& gb_rom) {
+	gb_cpu.load_bank(gb_rom);
 }
 void gb::start() {
 	LOG("GB start!");
 	int clock_max = gb_cpu.clock_m + FRAME_CYCLES;
-	do {
-		gb_cpu.execute();
-	} while (gb_cpu.clock_m < clock_max);
-	LOG("GB finished!");
-}
 
-void gb::set_context(unsigned char **screen) {
-	*screen = gb_cpu.gb_gpu.screen;
+	while (gb_screen.is_open()) {
+		gb_screen.events();
+		if (gb_cpu.clock_m < clock_max) {			
+			gb_cpu.execute();
+			if (gb_cpu.frame_ready()) {
+				gb_screen.render();
+				gb_cpu.reset_frame();
+			}
+		}
+	} 
+
+	LOG("GB finished!");
 }

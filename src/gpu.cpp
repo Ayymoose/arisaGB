@@ -274,6 +274,7 @@ void gpu::step(int m_cycle) {
 				line++;
 				if (line == SCREEN_HEIGHT) {
 					mode = VBLANK;
+					// Render frame
 					frame_ready = true;
 				} else {
 					mode = SCANLINE_OAM;

@@ -15,12 +15,11 @@
 #define H 5
 #define L 6
 #define F 7	// Flags
-
 #define REGISTERS 8
+
 #define NUM_OPCODES 256
 #define CB_PREFIX 256
 #define ENTRY_POINT 0x0100
-
 #define MEMORY_MAX 65535
 #define BANK_SIZE 16384
 
@@ -29,21 +28,31 @@
 // 1 machine cycle = 4 clock cycles
 // 70224 / 4 = 17556
 #define FRAME_CYCLES 17556
+/*
+namespace GB_CPU {
 
-/*enum class CPU {
-	A = 0x00,
-	B = 0x01,
-	C = 0x02,
-	D = 0x03,
-	E = 0x04,
-	H = 0x05,
-	L = 0x06,
-	F = 0x07,
-	REGISTERS = 0x08,
-	OPCODES = 256,
-	CB_PREFIX = 256,
-	ENTRY_POINT = 0x100
-};*/
+	enum class REGISTERS_ {
+		A_ = 0x00,
+		B_ = 0x01,
+		C_ = 0x02,
+		D_ = 0x03,
+		E_ = 0x04,
+		H_ = 0x05,
+		L_ = 0x06,
+		F_ = 0x07,
+		REGISTERS_ = 0x08,
+	};
+
+	enum class MEMORY {
+		OPCODES_ = 256,
+		CB_PREFIX_ = 256,
+		ENTRY_POINT_ = 0x100,
+		MEMORY_MAX_ = 65535,
+		BANK_SIZE_ = 16384,
+		FRAME_CYCLES_ = 17556
+	};
+
+}*/
 
 class z80 {
 
@@ -73,6 +82,10 @@ class z80 {
 		FRIEND_TEST(GPUMemory,ROM);
 		//FRIEND_TEST(GPU,MemoryBadWrite);
 
+		bool frame_ready() const;
+		void reset_frame();
+		unsigned char* get_context() const;
+
 		friend class gb;
 
 		gpu gb_gpu;
@@ -87,7 +100,7 @@ class z80 {
 
 		unsigned char memory[MEMORY_MAX]; // 64KB of memory
 		bool in_bios;
-		const int bios[256] =
+		const int bios[NUM_OPCODES] =
 		{
 			0x31, 0xFE, 0xFF, 0xAF, 0x21, 0xFF, 0x9F, 0x32, 0xCB, 0x7C, 0x20, 0xFB, 0x21, 0x26, 0xFF, 0x0E,
 			0x11, 0x3E, 0x80, 0x32, 0xE2, 0x0C, 0x3E, 0xF3, 0xE2, 0x32, 0x3E, 0x77, 0x77, 0x3E, 0xFC, 0xE0,
